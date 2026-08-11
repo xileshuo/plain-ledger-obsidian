@@ -24,8 +24,8 @@ https://github.com/xileshuo/plain-ledger-obsidian
 
 
 ### 手机端
-![Uploading iShot_2026-08-08_09.04.48.png…]()
-
+<img width="435" height="869" alt="iShot_2026-08-08_09 04 48" src="https://github.com/user-attachments/assets/0aa39850-607c-470c-8630-5609ea9781ec" />
+<img width="438" height="877" alt="iShot_2026-08-08_09 05 20" src="https://github.com/user-attachments/assets/a1945007-59d5-4181-99d5-d123d2f992ed" />
 
 ## 使用说明
 > **PlainLedger** 是运行在 Obsidian 里的独立记账面板——账单、分类、订阅规则都保存在**你的库内 JSON**，随 Obsidian / iCloud / Git 同步，不依赖第三方账 App，也不把数据上传到云端服务。
