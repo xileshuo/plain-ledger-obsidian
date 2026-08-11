@@ -20,27 +20,13 @@ https://github.com/xileshuo/plain-ledger-obsidian
 
 ### 总览
 
-![总览](https://raw.githubusercontent.com/xileshuo/plain-ledger-obsidian/main/media/hero.png)
+<img width="1900" height="1200" alt="记账" src="https://github.com/user-attachments/assets/0a1a1625-d632-4c44-8bfd-cbd1cb5bc558" />
 
-### 账本首页
 
-![账本首页](https://raw.githubusercontent.com/xileshuo/plain-ledger-obsidian/main/media/home.png)
+### 手机端
+![Uploading iShot_2026-08-08_09.04.48.png…]()
 
-### 统计
 
-![统计](https://raw.githubusercontent.com/xileshuo/plain-ledger-obsidian/main/media/stats.png)
-
-### 智能记账
-
-![智能记账](https://raw.githubusercontent.com/xileshuo/plain-ledger-obsidian/main/media/smart.png)
-
-### 手动记账
-
-![手动记账](https://raw.githubusercontent.com/xileshuo/plain-ledger-obsidian/main/media/manual.png)
-
-### 截图 OCR
-
-![截图 OCR](https://raw.githubusercontent.com/xileshuo/plain-ledger-obsidian/main/media/ocr.png)
 ## 使用说明
 > **PlainLedger** 是运行在 Obsidian 里的独立记账面板——账单、分类、订阅规则都保存在**你的库内 JSON**，随 Obsidian / iCloud / Git 同步，不依赖第三方账 App，也不把数据上传到云端服务。
 
