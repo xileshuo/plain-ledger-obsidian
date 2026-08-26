@@ -1,0 +1,10 @@
+{
+  "id": "plain-ledger",
+  "name": "PlainLedger",
+  "version": "4.0.0",
+  "minAppVersion": "1.5.0",
+  "description": "Obsidian 独立记账 — 五 Tab 布局、底栏记账、账本含日历、报表分类环图。",
+  "author": "囍樂",
+  "authorUrl": "https://xhslink.com/m/3uOoUHv2rI1",
+  "isDesktopOnly": false
+}
