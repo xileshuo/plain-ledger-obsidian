@@ -1,0 +1,20 @@
+{
+  "name": "plain-ledger-obsidian",
+  "version": "4.0.5",
+  "description": "PlainLedger — Obsidian 独立记账插件",
+  "main": "index.js",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node scripts/test-smart-parser.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@tesseract.js-data/chi_sim": "^1.0.0",
+    "@tesseract.js-data/eng": "^1.0.0",
+    "fflate": "^0.8.3",
+    "tesseract.js": "^7.0.0"
+  }
+}
