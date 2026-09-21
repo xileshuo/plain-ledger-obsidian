@@ -1,7 +1,7 @@
 # PlainLedger
 > **付费 · 48 小时试用 · ¥39.9 永久激活**
 Obsidian 独立记账面板（LifeOS）。账单、分类、订阅规则保存在库内 JSON，随库同步。
-当前公开版本：**4.0.12 · 48 小时试用**
+当前公开版本：**4.0.13 · 48 小时试用**
 ## 定价与购买
 | 项目 | 说明 |
 | --- | --- |
@@ -38,23 +38,6 @@ https://github.com/xileshuo/plain-ledger-obsidian
 ### 手动安装
 
 下载 [Latest Release](https://github.com/xileshuo/plain-ledger-obsidian/releases/latest) 的 `main.js`、`manifest.json` 到 `.obsidian/plugins/plain-ledger/`。
-## 界面预览
-
-**订阅管理**
-
-![订阅管理](https://raw.githubusercontent.com/xileshuo/plain-ledger-obsidian/main/media/subscriptions.png)
-
-**手动记账**
-
-![手动记账](https://raw.githubusercontent.com/xileshuo/plain-ledger-obsidian/main/media/manual.png)
-
-**智能记账**
-
-![智能记账](https://raw.githubusercontent.com/xileshuo/plain-ledger-obsidian/main/media/smart.png)
-
-**账单侧栏**
-
-![账单侧栏](https://raw.githubusercontent.com/xileshuo/plain-ledger-obsidian/main/media/bills.png)
 ## 使用说明
 > **PlainLedger** 是运行在 Obsidian 里的独立记账面板——账单、分类、订阅规则都保存在**你的库内 JSON**，随 Obsidian / iCloud / Git 同步，不依赖第三方账 App，也不把数据上传到云端服务。
 
@@ -290,6 +273,10 @@ Obsidian **设置 → 第三方插件 → PlainLedger** 与面板激活页 **高
 
 **Obsidian 是你的知识库，PlainLedger 是你的账本——数据留在库里，记一笔、看统计、管订阅，都在同一个面板完成。**
 ## 更新日志
+### 4.0.13
+
+- 修复：插件启用加载失败（日历热力 CSS 属性语法错误）
+
 ### 4.0.12
 
 - 公开 README：中文在前、英文在后；上传账单/智能/手动/订阅截图
@@ -323,12 +310,6 @@ Obsidian **设置 → 第三方插件 → PlainLedger** 与面板激活页 **高
 
 - 社区审核：补充 TypeScript 模块入口（src/main.ts），满足目录源码检测
 - 文档：公开 README 英文 Installation / Usage 前置
-
-### 4.0.5
-
-- 社区分发：公开包改为 48 小时试用，到期后 ¥39.9 永久激活
-- 关于：所有作品互相介绍售价，未安装可跳转 GitHub 了解/安装
-- 体验版：试用时长统一为 48 小时（与 BrainCore / 纪念日对齐）
 ---
 ## 分发说明
 本仓库用于社区插件 / BRAT / GitHub Release 分发与产品介绍，并附带 `src/` 等源码便于社区审核。
@@ -344,7 +325,7 @@ Obsidian **设置 → 第三方插件 → PlainLedger** 与面板激活页 **高
 
 PlainLedger is a paid LifeOS ledger panel for Obsidian. Bills, categories, and subscription rules stay in vault JSON and sync with your vault.
 
-Current public build: **4.0.12** (48-hour trial).
+Current public build: **4.0.13** (48-hour trial).
 
 ## LifeOS family
 

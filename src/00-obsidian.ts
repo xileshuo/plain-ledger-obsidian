@@ -1,4 +1,16 @@
-const { Plugin, ItemView, WorkspaceLeaf, Modal, Notice, PluginSettingTab, Setting, Platform, normalizePath, requestUrl, setCssProps, setCssStyles } = require("obsidian");
+const __obsidian = require("obsidian");
+const Plugin = __obsidian.Plugin;
+const ItemView = __obsidian.ItemView;
+const WorkspaceLeaf = __obsidian.WorkspaceLeaf;
+const Modal = __obsidian.Modal;
+const Notice = __obsidian.Notice;
+const PluginSettingTab = __obsidian.PluginSettingTab;
+const Setting = __obsidian.Setting;
+const Platform = __obsidian.Platform;
+const normalizePath = __obsidian.normalizePath;
+const requestUrl = __obsidian.requestUrl;
+const setCssProps = __obsidian.setCssProps;
+const setCssStyles = __obsidian.setCssStyles;
 
 function setSvgContent(el, svg) {
   if (!el) return;
@@ -15,14 +27,18 @@ function setSvgContent(el, svg) {
 
 function applyCssProps(el, props) {
   if (!el || !props) return;
-  if (typeof setCssProps === "function") {
-    setCssProps(el, props);
-    return;
-  }
-  if (typeof el.setCssProps === "function") {
-    el.setCssProps(props);
-    return;
-  }
+  try {
+    if (typeof setCssProps === "function") {
+      setCssProps(el, props);
+      return;
+    }
+  } catch (_) { /* fall through */ }
+  try {
+    if (typeof el.setCssProps === "function") {
+      el.setCssProps(props);
+      return;
+    }
+  } catch (_) { /* fall through */ }
   Object.keys(props).forEach((name) => {
     const value = props[name];
     if (value == null || value === "") el.style.removeProperty(name);
@@ -32,14 +48,18 @@ function applyCssProps(el, props) {
 
 function applyCssStyles(el, styles) {
   if (!el || !styles) return;
-  if (typeof setCssStyles === "function") {
-    setCssStyles(el, styles);
-    return;
-  }
-  if (typeof el.setCssStyles === "function") {
-    el.setCssStyles(styles);
-    return;
-  }
+  try {
+    if (typeof setCssStyles === "function") {
+      setCssStyles(el, styles);
+      return;
+    }
+  } catch (_) { /* fall through */ }
+  try {
+    if (typeof el.setCssStyles === "function") {
+      el.setCssStyles(styles);
+      return;
+    }
+  } catch (_) { /* fall through */ }
   Object.keys(styles).forEach((name) => {
     const value = styles[name];
     const cssName = name.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase());

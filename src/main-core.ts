@@ -2,7 +2,7 @@
 
 const PLUGIN_VERSION = "4.0.10";
 const VIEW_TYPE = "plain-ledger-dashboard";
-const ICON_NAME = "wallet";
+const ICON_NAME = "landmark";
 
 const DEFAULT_SETTINGS = {
   dataFolder: "Finance/PlainLedger",
@@ -4494,7 +4494,7 @@ class LedgerDashboardView extends ItemView {
       if (getCnHoliday(dk)) cell.addClass("holiday");
       if (info.expense > 0) {
         const intensity = Math.min(1, info.expense / maxExp);
-        applyCssProps(cell, { ["--heat"]: String(0.15 + intensity * 0.55 }));
+        applyCssProps(cell, { "--heat": String(0.15 + intensity * 0.55) });
         cell.addClass("has-expense");
         cell.createDiv({ cls: "plg-cal-exp-badge", text: formatCalShortAmt(info.expense) });
       }
@@ -4741,23 +4741,55 @@ function dedupePlainLedgerLeaves(app, keep) {
 
 module.exports = class PlainLedgerPlugin extends Plugin {
   async onload() {
+    try {
+      await this._onloadSafe();
+    } catch (err) {
+      console.error("[PlainLedger] onload failed:", err);
+      try {
+        new Notice(`PlainLedger 加载失败：${err && err.message ? err.message : err}`);
+      } catch (_) { /* ignore */ }
+      throw err;
+    }
+  }
+
+  async _onloadSafe() {
     // 协议尽早挂上：Obsidian 冷启动时 deep link 可能先于 settings/store 就绪
     this._deepLinkReady = false;
     this._pendingDeepLink = null;
-    this.registerObsidianProtocolHandler("plainledger", async (params) => {
-      const action = String(params?.action || params?.a || "capture").toLowerCase();
-      if (!this._deepLinkReady) {
-        this._pendingDeepLink = action;
-        return;
-      }
-      await this.handlePlainLedgerDeepLink(action);
-    });
+    try {
+      this.registerObsidianProtocolHandler("plainledger", async (params) => {
+        const action = String(params?.action || params?.a || "capture").toLowerCase();
+        if (!this._deepLinkReady) {
+          this._pendingDeepLink = action;
+          return;
+        }
+        await this.handlePlainLedgerDeepLink(action);
+      });
+    } catch (err) {
+      console.warn("[PlainLedger] protocol handler:", err);
+    }
 
     await this.loadSettings();
     this.store = new LedgerStore(this);
-    await this.store.load();
+    try {
+      await this.store.load();
+    } catch (err) {
+      console.error("[PlainLedger] store.load:", err);
+      this.store.data = {
+        version: 1,
+        ledger: "默认账本",
+        categories: [],
+        transactions: [],
+        recurring: [],
+        subscriptions: [],
+      };
+    }
     if (typeof PLUGIN_EDITION === "string" && PLUGIN_EDITION === "public") {
-      await this.store.ensurePublicEditionDefaults();
+      try {
+        await this.store.ensurePublicEditionDefaults();
+      } catch (err) {
+        console.warn("[PlainLedger] ensurePublicEditionDefaults:", err);
+      }
     }
 
     this._deepLinkReady = true;
@@ -4768,14 +4800,25 @@ module.exports = class PlainLedgerPlugin extends Plugin {
     }
 
     this.registerInterval(window.setInterval(async () => {
-      const n = await this.store.processDueRecurring();
-      const m = await this.store.processDueSubscriptions();
-      if (n > 0 || m > 0) this.refreshView();
+      try {
+        const n = await this.store.processDueRecurring();
+        const m = await this.store.processDueSubscriptions();
+        if (n > 0 || m > 0) this.refreshView();
+      } catch (err) {
+        console.warn("[PlainLedger] due jobs:", err);
+      }
     }, 3600000));
 
     this.registerView(VIEW_TYPE, (leaf) => new LedgerDashboardView(leaf, this));
 
-    this.addRibbonIcon(ICON_NAME, "打开 PlainLedger", () => this.openDashboard());
+    try {
+      this.addRibbonIcon(ICON_NAME, "打开 PlainLedger", () => this.openDashboard());
+    } catch (err) {
+      console.warn("[PlainLedger] ribbon icon:", err);
+      try {
+        this.addRibbonIcon("dice", "打开 PlainLedger", () => this.openDashboard());
+      } catch (_) { /* ignore */ }
+    }
 
     this.addCommand({
       id: "open-dashboard",
