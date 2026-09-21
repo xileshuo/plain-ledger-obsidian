@@ -10,6 +10,10 @@ const PLUGIN_PHILOSOPHY_SUBTITLE =
 
 /** 按版本维护；弹窗默认展开最新版，历史版本点击展开 */
 const PLUGIN_CHANGELOG = {
+    "4.0.11": [
+        "社区 CSS lint：去掉 !important、text-indent、column-gap、display:contents 等审核警告",
+        "文档：公开 README 恢复中文说明（英文 Installation 仍在文首）",
+    ],
     "4.0.10": [
         "社区审核：OCR 语言包改用 vault.adapter.readBinary 读取（去掉 require(\"fs\") Behavior Warning）",
         "文档：README 保持英文短说明；中文说明移至 README.zh.md",
