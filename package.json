@@ -1,0 +1,27 @@
+{
+  "name": "plain-ledger-obsidian",
+  "version": "4.0.9",
+  "description": "Standalone ledger for vault-local bills, budgets, subscriptions, and reports.",
+  "main": "index.js",
+  "scripts": {
+    "build": "node scripts/build.mjs trial24h",
+    "test": "node scripts/test-smart-parser.mjs",
+    "build:modules": "node esbuild.config.mjs production"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@tesseract.js-data/chi_sim": "^1.0.0",
+    "@tesseract.js-data/eng": "^1.0.0",
+    "fflate": "^0.8.3",
+    "tesseract.js": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.0.0",
+    "esbuild": "0.25.0",
+    "obsidian": "^1.5.0",
+    "typescript": "5.6.2"
+  }
+}
