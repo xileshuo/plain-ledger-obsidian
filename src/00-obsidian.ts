@@ -11,6 +11,7 @@ const normalizePath = __obsidian.normalizePath;
 const requestUrl = __obsidian.requestUrl;
 const setCssProps = __obsidian.setCssProps;
 const setCssStyles = __obsidian.setCssStyles;
+const addIcon = __obsidian.addIcon;
 
 function setSvgContent(el, svg) {
   if (!el) return;

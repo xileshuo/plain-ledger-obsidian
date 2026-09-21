@@ -1,8 +1,8 @@
 // ─── Plugin bootstrap (obsidian import in src/00-obsidian.ts) ────────────────
 
-const PLUGIN_VERSION = "4.0.10";
+const PLUGIN_VERSION = "4.0.14";
 const VIEW_TYPE = "plain-ledger-dashboard";
-const ICON_NAME = "landmark";
+const ICON_NAME = "wallet";
 
 const DEFAULT_SETTINGS = {
   dataFolder: "Finance/PlainLedger",
@@ -4812,12 +4812,19 @@ module.exports = class PlainLedgerPlugin extends Plugin {
     this.registerView(VIEW_TYPE, (leaf) => new LedgerDashboardView(leaf, this));
 
     try {
+      if (typeof addIcon === "function") {
+        addIcon(ICON_NAME, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><circle cx="17" cy="14" r="1"/></svg>`);
+      }
+    } catch (_) { /* ignore */ }
+    try {
       this.addRibbonIcon(ICON_NAME, "打开 PlainLedger", () => this.openDashboard());
     } catch (err) {
       console.warn("[PlainLedger] ribbon icon:", err);
       try {
-        this.addRibbonIcon("dice", "打开 PlainLedger", () => this.openDashboard());
-      } catch (_) { /* ignore */ }
+        this.addRibbonIcon("wallet", "打开 PlainLedger", () => this.openDashboard());
+      } catch (_) {
+        try { this.addRibbonIcon("dice", "打开 PlainLedger", () => this.openDashboard()); } catch (__) { /* ignore */ }
+      }
     }
 
     this.addCommand({

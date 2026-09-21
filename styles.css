@@ -163,7 +163,14 @@
   padding: var(--plg-space-xs) 0 var(--plg-space-sm);
   -webkit-overflow-scrolling: touch;
   min-height: 0;
+  scrollbar-width: none;
   -ms-overflow-style: none;
+}
+
+.plg-body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .plg-body.plg-body-split {
@@ -233,7 +240,14 @@
   min-height: 0;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  scrollbar-width: none;
   -ms-overflow-style: none;
+}
+
+.plg-page-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .plg-page-fixed.plg-glass-panel,
@@ -2969,6 +2983,12 @@ input.plg-budget-title-input.plg-budget-val-inline {
   -webkit-overflow-scrolling: touch;
 }
 
+.plg-overlay-body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 .plg-overlay-mobile-fit .plg-overlay-panel.plg-settings-modal .plg-overlay-head {
   padding-top: max(10px, env(safe-area-inset-top, 0px));
   padding-bottom: 6px;
@@ -4014,6 +4034,9 @@ body.plg-capture-kb-open .plg-overlay-mobile-fit .plg-capture-mobile-footer {
   padding: 12px 16px 16px;
   overflow-y: auto;
   flex: 1;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
   -ms-overflow-style: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -6957,7 +6980,7 @@ span.plg-budget-val-inline {
 }
 
 .plg-capture-tab-pane.hidden {
-  display: none;
+  display: none !important;
 }
 
 .plg-overlay-mobile-fit .plg-capture-tab-pane {
@@ -8076,6 +8099,12 @@ span.plg-budget-val-inline {
 .plg-ocr-drop-icon {
   font-size: 36px;
   margin-bottom: 8px;
+}
+
+.plg-ocr-drop-sub {
+  margin-top: 6px;
+  font-size: 11px;
+  opacity: 0.75;
 }
 
 .plg-ocr-drop-text {
@@ -11772,13 +11801,17 @@ span.plg-budget-val-inline {
   min-height: 28px;
 }
 
-.plg-capture-tab-pane.plg-capture-pane {
+.plg-capture-tab-pane.plg-capture-pane:not(.hidden) {
   flex: 1 1 0;
   min-height: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.plg-capture-tab-pane.plg-capture-pane.hidden {
+  display: none !important;
 }
 
 .plg-edit-modal .plg-edit-reimb-row {
@@ -14532,3 +14565,45 @@ body.plg-capture-kb-open .plg-overlay-mobile-fit .plg-smart-panel .plg-capture-t
   top: var(--plg-tip-top, 0);
 }
 
+
+
+/* ─── 无痕滚动：隐藏滚动条（保留滚动能力）─── */
+.plg-body,
+.plg-page-scroll,
+.plg-overlay-body,
+.plg-summary-table-body.is-scrollable,
+.plg-cat-grid-mobile-grid,
+.plg-cat-grid-mobile-strip,
+.plg-overlay-mobile-fit .plg-manual-recent-chips-mobile,
+.plg-overlay-mobile-fit .plg-manual-panel .plg-cat-grid-mobile-grid,
+.plg-overlay-panel.plg-tx-history-overlay .plg-sub-history-list,
+.plg-overlay-panel.plg-capture-overlay:not(.plg-overlay-panel-mobile-fit) .plg-manual-panel .plg-cat-grid-desktop-2row,
+.plg-overlay-panel.plg-capture-overlay:not(.plg-overlay-panel-mobile-fit) .plg-manual-panel .plg-cat-grid-manual {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.plg-body::-webkit-scrollbar,
+.plg-page-scroll::-webkit-scrollbar,
+.plg-overlay-body::-webkit-scrollbar,
+.plg-summary-table-body.is-scrollable::-webkit-scrollbar,
+.plg-cat-grid-mobile-grid::-webkit-scrollbar,
+.plg-cat-grid-mobile-strip::-webkit-scrollbar,
+.plg-overlay-mobile-fit .plg-manual-recent-chips-mobile::-webkit-scrollbar,
+.plg-overlay-mobile-fit .plg-manual-panel .plg-cat-grid-mobile-grid::-webkit-scrollbar,
+.plg-overlay-panel.plg-tx-history-overlay .plg-sub-history-list::-webkit-scrollbar,
+.plg-overlay-panel.plg-capture-overlay:not(.plg-overlay-panel-mobile-fit) .plg-manual-panel .plg-cat-grid-desktop-2row::-webkit-scrollbar,
+.plg-overlay-panel.plg-capture-overlay:not(.plg-overlay-panel-mobile-fit) .plg-manual-panel .plg-cat-grid-manual::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* 记一笔面板内卡片无痕：去掉多余边框/阴影，避免 Tab 内容「分块」感 */
+.plg-overlay-panel.plg-capture-overlay .plg-capture-card.plg-glass-panel {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}

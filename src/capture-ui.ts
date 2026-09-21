@@ -2268,7 +2268,11 @@ class OcrCapturePanel {
         drop.createDiv({ cls: "plg-ocr-drop-icon", text: "📷" });
         drop.createDiv({
           cls: "plg-ocr-drop-text",
-          text: isMobileCaptureUi() ? "点击选择图片，或长按粘贴截图" : "点击选择图片，或 Ctrl+V / 长按粘贴截图",
+          text: "点击上传 / 粘贴截图",
+        });
+        drop.createDiv({
+          cls: "plg-ocr-drop-sub plg-muted",
+          text: "支持微信 · 支付宝 · 银行 App",
         });
         this.previewImg = divCls(drop, "plg-ocr-preview-img hidden");
         const fileInput = container.createEl("input", { type: "file", cls: "plg-file-input-hidden", attr: { accept: "image/*" } });
@@ -2457,7 +2461,7 @@ function openCapturePanel(plugin, opts = {}) {
   const allModes = [
     { id: "smart", label: "智能", hint: "例：前天咖啡18、工资11000、6.5午餐30、6月5日买菜42" },
     { id: "manual", label: "手动", hint: "点选分类，有二级时点开选择；再填金额保存" },
-    { id: "ocr", label: "截图", hint: "粘贴或上传支付截图，自动识别金额后入账" },
+    { id: "ocr", label: "截图", hint: "粘贴或上传支付截图，OCR 识别后确认" },
   ];
   const mobileCapture = Platform.isMobile;
   const modes = mobileCapture ? allModes.filter((m) => m.id !== "ocr") : allModes;
@@ -2517,7 +2521,7 @@ function openCapturePanel(plugin, opts = {}) {
   };
 
   openPlgOverlay({
-    title: "记账",
+    title: "记一笔",
     cls: "plg-capture-overlay",
     wide: true,
     build: (body, close) => {

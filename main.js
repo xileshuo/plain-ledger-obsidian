@@ -36,6 +36,7 @@ const normalizePath = __obsidian.normalizePath;
 const requestUrl = __obsidian.requestUrl;
 const setCssProps = __obsidian.setCssProps;
 const setCssStyles = __obsidian.setCssStyles;
+const addIcon = __obsidian.addIcon;
 
 function setSvgContent(el, svg) {
   if (!el) return;
@@ -1473,7 +1474,11 @@ const PLUGIN_PHILOSOPHY_SUBTITLE =
 
 /** 按版本维护；弹窗默认展开最新版，历史版本点击展开 */
 const PLUGIN_CHANGELOG = {
-    "4.0.13": [
+    "4.0.14": [
+    "修复：记一笔三 Tab 叠层显示（截图页串入智能/手动内容）",
+    "修复：侧栏图标改回钱包；主面板无痕滚动（隐藏滚动条）",
+  ],
+  "4.0.13": [
     "修复：插件启用加载失败（日历热力 CSS 属性语法错误）",
   ],
   "4.0.12": [
@@ -7051,7 +7056,11 @@ class OcrCapturePanel {
         drop.createDiv({ cls: "plg-ocr-drop-icon", text: "📷" });
         drop.createDiv({
           cls: "plg-ocr-drop-text",
-          text: isMobileCaptureUi() ? "点击选择图片，或长按粘贴截图" : "点击选择图片，或 Ctrl+V / 长按粘贴截图",
+          text: "点击上传 / 粘贴截图",
+        });
+        drop.createDiv({
+          cls: "plg-ocr-drop-sub plg-muted",
+          text: "支持微信 · 支付宝 · 银行 App",
         });
         this.previewImg = divCls(drop, "plg-ocr-preview-img hidden");
         const fileInput = container.createEl("input", { type: "file", cls: "plg-file-input-hidden", attr: { accept: "image/*" } });
@@ -7240,7 +7249,7 @@ function openCapturePanel(plugin, opts = {}) {
   const allModes = [
     { id: "smart", label: "智能", hint: "例：前天咖啡18、工资11000、6.5午餐30、6月5日买菜42" },
     { id: "manual", label: "手动", hint: "点选分类，有二级时点开选择；再填金额保存" },
-    { id: "ocr", label: "截图", hint: "粘贴或上传支付截图，自动识别金额后入账" },
+    { id: "ocr", label: "截图", hint: "粘贴或上传支付截图，OCR 识别后确认" },
   ];
   const mobileCapture = Platform.isMobile;
   const modes = mobileCapture ? allModes.filter((m) => m.id !== "ocr") : allModes;
@@ -7300,7 +7309,7 @@ function openCapturePanel(plugin, opts = {}) {
   };
 
   openPlgOverlay({
-    title: "记账",
+    title: "记一笔",
     cls: "plg-capture-overlay",
     wide: true,
     build: (body, close) => {
@@ -12661,9 +12670,9 @@ function renderPlgNavAppearancePanel(panel, plugin, focusOpts) {
 
 // ─── Plugin bootstrap (obsidian import in src/00-obsidian.ts) ────────────────
 
-const PLUGIN_VERSION = "4.0.13";
+const PLUGIN_VERSION = "4.0.14";
 const VIEW_TYPE = "plain-ledger-dashboard";
-const ICON_NAME = "landmark";
+const ICON_NAME = "wallet";
 
 const DEFAULT_SETTINGS = {
   dataFolder: "Finance/PlainLedger",
@@ -17473,12 +17482,19 @@ module.exports = class PlainLedgerPlugin extends Plugin {
     this.registerView(VIEW_TYPE, (leaf) => new LedgerDashboardView(leaf, this));
 
     try {
+      if (typeof addIcon === "function") {
+        addIcon(ICON_NAME, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><circle cx="17" cy="14" r="1"/></svg>`);
+      }
+    } catch (_) { /* ignore */ }
+    try {
       this.addRibbonIcon(ICON_NAME, "打开 PlainLedger", () => this.openDashboard());
     } catch (err) {
       console.warn("[PlainLedger] ribbon icon:", err);
       try {
-        this.addRibbonIcon("dice", "打开 PlainLedger", () => this.openDashboard());
-      } catch (_) { /* ignore */ }
+        this.addRibbonIcon("wallet", "打开 PlainLedger", () => this.openDashboard());
+      } catch (_) {
+        try { this.addRibbonIcon("dice", "打开 PlainLedger", () => this.openDashboard()); } catch (__) { /* ignore */ }
+      }
     }
 
     this.addCommand({
