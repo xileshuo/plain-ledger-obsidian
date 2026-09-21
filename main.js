@@ -1453,7 +1453,10 @@ const PLUGIN_PHILOSOPHY_SUBTITLE =
 
 /** 按版本维护；弹窗默认展开最新版，历史版本点击展开 */
 const PLUGIN_CHANGELOG = {
-    "4.0.11": [
+    "4.0.12": [
+    "公开 README：中文在前、英文在后；上传账单/智能/手动/订阅截图",
+  ],
+  "4.0.11": [
         "社区 CSS lint：去掉 !important、text-indent、column-gap、display:contents 等审核警告",
         "文档：公开 README 恢复中文说明（英文 Installation 仍在文首）",
     ],
@@ -12635,7 +12638,7 @@ function renderPlgNavAppearancePanel(panel, plugin, focusOpts) {
 
 // ─── Plugin bootstrap (obsidian import in src/00-obsidian.ts) ────────────────
 
-const PLUGIN_VERSION = "4.0.11";
+const PLUGIN_VERSION = "4.0.12";
 const VIEW_TYPE = "plain-ledger-dashboard";
 const ICON_NAME = "wallet";
 
