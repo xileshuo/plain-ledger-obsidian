@@ -10,6 +10,9 @@ const PLUGIN_PHILOSOPHY_SUBTITLE =
 
 /** 按版本维护；弹窗默认展开最新版，历史版本点击展开 */
 const PLUGIN_CHANGELOG = {
+  "4.0.17": [
+    "审核：manifest.description 改以英文句号结尾（Scorecard 不认中文 。）",
+  ],
   "4.0.16": [
     "设置：体验包激活后标题显示「公版」，不再写「48小时体验版」",
   ],

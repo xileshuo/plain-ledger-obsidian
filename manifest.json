@@ -1,9 +1,9 @@
 {
   "id": "plain-ledger",
   "name": "PlainLedger",
-  "version": "4.0.16",
+  "version": "4.0.17",
   "minAppVersion": "1.7.2",
-  "description": "库内账单、预算、订阅与报表（LifeOS）。",
+  "description": "库内账单、预算、订阅与报表（LifeOS）.",
   "author": "囍樂",
   "authorUrl": "https://github.com/xileshuo",
   "isDesktopOnly": false

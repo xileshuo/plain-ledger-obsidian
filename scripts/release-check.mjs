@@ -33,6 +33,9 @@ if (!desc) {
 } else if (!/^[\u4e00-\u9fff]/.test(desc)) {
   // 库内/市场列表介绍用纯中文
   failures.push("manifest.description 应以中文开头（纯中文介绍）");
+} else if (!/[.!?]$/.test(desc)) {
+  // Scorecard：必须以英文 . ! ? 结尾（中文 。 不算）
+  failures.push("manifest.description 须以英文标点 . ! ? 结尾（中文 。 审核不认）");
 } else if (/[A-Za-z]{4,}/.test(desc) && !/LifeOS|Moments|iCal|OCR|Tab/.test(desc)) {
   // 允许专有名词；长英文句视为未改干净
   failures.push("manifest.description 应保持纯中文（专有名词除外）");
