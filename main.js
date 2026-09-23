@@ -979,12 +979,23 @@ function renderLifeOsLicenseSettingsPanel(panel, config) {
 
 function getLifeOsMaxOverlayZIndex() {
   let max = 100000;
-  document.querySelectorAll(".modal-container, .modal-bg, .vertical-tab-content, .vertical-tab-header").forEach((el) => {
-    const raw = el.style.zIndex || window.getComputedStyle(el).zIndex || "0";
-    const z = parseInt(raw, 10);
-    if (!Number.isNaN(z) && z > max) max = z;
+  const nodes = document.querySelectorAll(
+    ".modal-container, .modal-bg, .modal, .vertical-tab-content, .vertical-tab-header, .menu, .suggestion-container, .popover, .workspace-leaf-content"
+  );
+  nodes.forEach((el) => {
+    try {
+      const raw = el.style?.zIndex || window.getComputedStyle(el).zIndex || "0";
+      const z = parseInt(raw, 10);
+      if (!Number.isNaN(z) && z > max) max = z;
+    } catch (_) { /* ignore */ }
   });
-  return max + 200;
+  // 设置页打开时再抬一档，避免个别主题 / 手机端模态 z-index 读偏导致二级弹层被盖
+  try {
+    if (document.querySelector(".modal-container .vertical-tab-header, .modal-container .vertical-tab-content")) {
+      max = Math.max(max, 5000000);
+    }
+  } catch (_) { /* ignore */ }
+  return max + 500;
 }
 
 function isObsidianSettingsOpen(app) {
@@ -1475,6 +1486,10 @@ const PLUGIN_PHILOSOPHY_SUBTITLE =
 
 /** 按版本维护；弹窗默认展开最新版，历史版本点击展开 */
 const PLUGIN_CHANGELOG = {
+  "4.0.20": [
+    "修复：手机端账本本年/本月/本周与预算区网格未占满整行导致数字叠在一起",
+    "修复：设置内 iconfont 二级面板在部分库/主题下被一级设置窗盖住（z-index 再抬高）",
+  ],
   "4.0.19": [
     "恢复：iconfont 在线搜索、订阅 favicon（DuckDuckGo / Google）与 OCR CDN 原逻辑",
     "修复：设置内 iconfont 二级面板 z-index，挂到 body 并压过一级设置窗",
@@ -4956,18 +4971,24 @@ function openPlgOverlay(opts) {
     // 只清 PlainLedger 自己的 overlay，勿误关其它 LifeOS 插件弹层
     document.querySelectorAll(".plg-overlay").forEach((el) => el.remove());
   }
-  // 始终挂到 body，避免落在 Obsidian 设置滚动容器里被裁切 / 盖住
+  // 始终挂到 body 末尾，避免落在设置滚动容器里被裁切 / 盖住
   const host = document.body || document.documentElement;
   const overlay = host.createDiv({ cls: "plg-overlay" });
   addClasses(overlay, "lifeos-overlay");
+  try { host.appendChild(overlay); } catch (_) { /* already attached */ }
   const isCapture = String(cls).includes("plg-capture-overlay");
   const depth = document.querySelectorAll(".lifeos-overlay, .plg-overlay").length;
   const settingsZ = typeof getLifeOsMaxOverlayZIndex === "function" ? getLifeOsMaxOverlayZIndex() : 0;
   const floorZ = isCapture ? 1000050 : 1000000;
-  // 二级/三级弹层叠在一级之上；并压过 Obsidian 设置模态
-  const tierBoost = Math.max(0, Number(tier) || 0) * 100;
-  const baseZ = Math.max(floorZ, settingsZ) + tierBoost;
-  applyCssProps(overlay, { "--plg-overlay-z": String(baseZ + depth * 30) });
+  // 二级/三级弹层叠在一级之上；并压过 Obsidian 设置模态（各库主题 z-index 可能不同）
+  const tierBoost = Math.max(0, Number(tier) || 0) * 200;
+  const z = Math.max(floorZ, settingsZ) + tierBoost + depth * 50;
+  applyCssProps(overlay, { "--plg-overlay-z": String(z) });
+  try {
+    overlay.style.setProperty("z-index", String(z), "important");
+  } catch (_) {
+    overlay.style.zIndex = String(z);
+  }
   if (isCapture && isMobileCaptureUi()) overlay.addClass("plg-capture-sheet-host");
   const panel = overlay.createDiv({ cls: "plg-overlay-panel" });
   addClasses(panel, "lifeos-overlay-panel", cls, wide ? "wide" : "");
@@ -4992,7 +5013,16 @@ function openPlgOverlay(opts) {
     close();
   });
   panel.addEventListener("click", (e) => e.stopPropagation());
+  // 挂载后再抬一次：部分主题/手机端在打开设置后才会把 modal z-index 写高
   window.requestAnimationFrame(() => {
+    try {
+      const again = typeof getLifeOsMaxOverlayZIndex === "function" ? getLifeOsMaxOverlayZIndex() : settingsZ;
+      const z2 = Math.max(z, again + tierBoost + depth * 50);
+      if (z2 > z) {
+        applyCssProps(overlay, { "--plg-overlay-z": String(z2) });
+        overlay.style.setProperty("z-index", String(z2), "important");
+      }
+    } catch (_) { /* ignore */ }
     try {
       build(body, close);
       const mobileOverlay = body.closest(".plg-overlay-mobile-fit");
@@ -12696,7 +12726,7 @@ function renderPlgNavAppearancePanel(panel, plugin, focusOpts) {
 
 // ─── Plugin bootstrap (obsidian import in src/00-obsidian.ts) ────────────────
 
-const PLUGIN_VERSION = "4.0.19";
+const PLUGIN_VERSION = "4.0.20";
 const VIEW_TYPE = "plain-ledger-dashboard";
 const ICON_NAME = "wallet";
 

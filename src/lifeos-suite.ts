@@ -428,12 +428,23 @@ function renderLifeOsLicenseSettingsPanel(panel, config) {
 
 function getLifeOsMaxOverlayZIndex() {
   let max = 100000;
-  document.querySelectorAll(".modal-container, .modal-bg, .vertical-tab-content, .vertical-tab-header").forEach((el) => {
-    const raw = el.style.zIndex || window.getComputedStyle(el).zIndex || "0";
-    const z = parseInt(raw, 10);
-    if (!Number.isNaN(z) && z > max) max = z;
+  const nodes = document.querySelectorAll(
+    ".modal-container, .modal-bg, .modal, .vertical-tab-content, .vertical-tab-header, .menu, .suggestion-container, .popover, .workspace-leaf-content"
+  );
+  nodes.forEach((el) => {
+    try {
+      const raw = el.style?.zIndex || window.getComputedStyle(el).zIndex || "0";
+      const z = parseInt(raw, 10);
+      if (!Number.isNaN(z) && z > max) max = z;
+    } catch (_) { /* ignore */ }
   });
-  return max + 200;
+  // 设置页打开时再抬一档，避免个别主题 / 手机端模态 z-index 读偏导致二级弹层被盖
+  try {
+    if (document.querySelector(".modal-container .vertical-tab-header, .modal-container .vertical-tab-content")) {
+      max = Math.max(max, 5000000);
+    }
+  } catch (_) { /* ignore */ }
+  return max + 500;
 }
 
 function isObsidianSettingsOpen(app) {

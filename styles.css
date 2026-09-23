@@ -582,14 +582,25 @@
   gap: 4px;
   row-gap: 0;
   width: 100%;
+  align-items: start;
 }
 
 .plg-mobile .plg-metrics-align-cards {
   display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
 }
 
 .plg-mobile .plg-metrics-align-budget.plg-budget-mobile-stack {
   display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 4px;
+  width: 100%;
+  min-width: 0;
   padding: 0;
   border: none;
   border-top: none;
@@ -622,6 +633,13 @@
 
 .plg-mobile .plg-home-metrics-align .plg-budget-mobile-title {
   display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 6px;
 }
 
 .plg-mobile .plg-home-metrics-align .plg-budget-title-align-year {
@@ -770,6 +788,14 @@ input.plg-budget-title-input.plg-budget-val-inline {
   font-weight: 700;
   line-height: 1.2;
   color: inherit;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plg-mobile .plg-budget-mobile-stats .plg-budget-amt-block .num {
+  font-size: 13px;
 }
 
 .plg-budget-mobile-stats .plg-budget-amt-block .num.inc,
