@@ -20,13 +20,13 @@ const version = manifest.version;
 const labels = {
   personal: "个人版",
   public: "公版",
-  trial24h: "24小时体验版",
+  trial24h: "48小时体验版",
 };
 
 const zipNames = {
   personal: `PlainLedger-v${version}-个人版.zip`,
   public: `PlainLedger-v${version}-公版.zip`,
-  trial24h: `PlainLedger-v${version}-24小时体验版.zip`,
+  trial24h: `PlainLedger-v${version}-48小时体验版.zip`,
 };
 
 function run(cmd, opts = {}) {
@@ -118,7 +118,7 @@ try {
     "|---|---|",
     `| ${zipNames.personal} | 个人版 · 免激活 |`,
     `| ${zipNames.public} | 公版 · 需激活 |`,
-    `| ${zipNames.trial24h} | 24 小时体验版 |`,
+    `| ${zipNames.trial24h} | 48 小时体验版 |`,
     "",
     "安装：解压后将文件夹内全部内容复制到 `你的库/.obsidian/plugins/plain-ledger/` 并启用插件。",
   ].join("\n");

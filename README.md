@@ -1,7 +1,7 @@
 # PlainLedger
 > **付费 · 48 小时试用 · ¥39.9 永久激活**
 Obsidian 独立记账面板（LifeOS）。账单、分类、订阅规则保存在库内 JSON，随库同步。
-当前公开版本：**4.0.14 · 48 小时试用**
+当前公开版本：**4.0.15 · 48 小时试用**
 ## 定价与购买
 | 项目 | 说明 |
 | --- | --- |
@@ -273,6 +273,11 @@ Obsidian **设置 → 第三方插件 → PlainLedger** 与面板激活页 **高
 
 **Obsidian 是你的知识库，PlainLedger 是你的账本——数据留在库里，记一笔、看统计、管订阅，都在同一个面板完成。**
 ## 更新日志
+### 4.0.15
+
+- 审核：去掉记一笔 Tab 的 !important；build 默认 trial48h；package license=MIT
+- 审核：manifest 英文 description；README 版本对齐；新增 release-check
+
 ### 4.0.14
 
 - 修复：记一笔三 Tab 叠层显示（截图页串入智能/手动内容）
@@ -305,11 +310,6 @@ Obsidian **设置 → 第三方插件 → PlainLedger** 与面板激活页 **高
 
 - 社区审核：设置页区块标题统一 Setting.setHeading()，消除 scorecard heading Error
 - 社区审核：关于/授权/快捷指令与布局 helper 同步改用 setHeading
-
-### 4.0.7
-
-- 社区审核：去掉运行时注入 style / 内联样式 / innerHTML，满足目录 Error 规则
-- 构建：公开包 build 固定 trial 版，与 Release main.js 一致
 ---
 ## 分发说明
 本仓库用于社区插件 / BRAT / GitHub Release 分发与产品介绍，并附带 `src/` 等源码便于社区审核。
@@ -325,7 +325,7 @@ Obsidian **设置 → 第三方插件 → PlainLedger** 与面板激活页 **高
 
 PlainLedger is a paid LifeOS ledger panel for Obsidian. Bills, categories, and subscription rules stay in vault JSON and sync with your vault.
 
-Current public build: **4.0.14** (48-hour trial).
+Current public build: **4.0.15** (48-hour trial).
 
 ## LifeOS family
 

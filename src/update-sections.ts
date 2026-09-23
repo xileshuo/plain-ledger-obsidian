@@ -10,7 +10,11 @@ const PLUGIN_PHILOSOPHY_SUBTITLE =
 
 /** 按版本维护；弹窗默认展开最新版，历史版本点击展开 */
 const PLUGIN_CHANGELOG = {
-    "4.0.14": [
+    "4.0.15": [
+    "审核：去掉记一笔 Tab 的 !important；build 默认 trial48h；package license=MIT",
+    "审核：manifest 英文 description；README 版本对齐；新增 release-check",
+  ],
+  "4.0.14": [
     "修复：记一笔三 Tab 叠层显示（截图页串入智能/手动内容）",
     "修复：侧栏图标改回钱包；主面板无痕滚动（隐藏滚动条）",
   ],

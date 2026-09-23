@@ -4,7 +4,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
-const edition = process.env.PLG_EDITION || process.argv[2] || "personal";
+const edition = process.env.PLG_EDITION || process.argv[2] || "trial24h";
 const editionDir = path.join(root, "editions", edition);
 if (!fs.existsSync(editionDir)) {
   console.error(`Unknown edition "${edition}". Use personal, public, or trial24h.`);

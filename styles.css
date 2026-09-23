@@ -6980,7 +6980,7 @@ span.plg-budget-val-inline {
 }
 
 .plg-capture-tab-pane.hidden {
-  display: none !important;
+  display: none;
 }
 
 .plg-overlay-mobile-fit .plg-capture-tab-pane {
@@ -6992,7 +6992,8 @@ span.plg-budget-val-inline {
   overflow: hidden;
 }
 
-.plg-overlay-mobile-fit .plg-capture-tab-pane.hidden {
+.plg-overlay-mobile-fit .plg-capture-tab-pane.hidden,
+.plg-overlay-mobile-fit .plg-capture-tab-pane.plg-capture-pane.hidden {
   display: none;
 }
 
@@ -11811,7 +11812,7 @@ span.plg-budget-val-inline {
 }
 
 .plg-capture-tab-pane.plg-capture-pane.hidden {
-  display: none !important;
+  display: none;
 }
 
 .plg-edit-modal .plg-edit-reimb-row {
