@@ -1475,6 +1475,9 @@ const PLUGIN_PHILOSOPHY_SUBTITLE =
 
 /** 按版本维护；弹窗默认展开最新版，历史版本点击展开 */
 const PLUGIN_CHANGELOG = {
+  "4.0.18": [
+    "审核：去掉 iconfont / favicon / OCR CDN 外网请求，降低 Scorecard 风险披露",
+  ],
   "4.0.17": [
     "审核：manifest.description 改以英文句号结尾（Scorecard 不认中文 。）",
   ],
@@ -3261,41 +3264,8 @@ function syncSubscriptionIconWrap(wrap, img, fallbackSrc) {
 }
 
 async function tryLoadRemoteFavicon(img, domain, fallbackSrc, wrap) {
-  if (!domain || typeof requestUrl !== "function") return false;
-  const urls = [
-    `https://icons.duckduckgo.com/ip3/${domain}.ico`,
-    `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`,
-  ];
-  for (const url of urls) {
-    try {
-      const res = await requestUrl({ url, method: "GET" });
-      if (res.status >= 200 && res.status < 300 && res.arrayBuffer?.byteLength > 80) {
-        const type = res.headers?.["content-type"] || "image/png";
-        const blob = new Blob([res.arrayBuffer], { type });
-        const objectUrl = URL.createObjectURL(blob);
-        await new Promise((resolve) => {
-          const probe = new Image();
-          probe.onload = () => {
-            if (probe.naturalWidth >= 16 && probe.naturalHeight >= 16) {
-              img.src = objectUrl;
-              syncSubscriptionIconWrap(wrap, img, fallbackSrc);
-            } else {
-              URL.revokeObjectURL(objectUrl);
-              img.src = fallbackSrc;
-              syncSubscriptionIconWrap(wrap, img, fallbackSrc);
-            }
-            resolve();
-          };
-          probe.onerror = () => {
-            URL.revokeObjectURL(objectUrl);
-            resolve();
-          };
-          probe.src = objectUrl;
-        });
-        if (wrap?.hasClass("has-img")) return true;
-      }
-    } catch (_) { /* try next source */ }
-  }
+  // 社区 Scorecard：不再向 duckduckgo / google 拉 favicon，只用本地字母标，减少外网 Disclosure
+  void domain;
   img.src = fallbackSrc;
   syncSubscriptionIconWrap(wrap, img, fallbackSrc);
   return false;
@@ -6890,13 +6860,9 @@ async function readBundledLangGz(plugin, lang) {
   return null;
 }
 
-function langDownloadUrls(lang) {
-  const base = `@tesseract.js-data/${lang}/4.0.0_best_int/${lang}.traineddata.gz`;
-  return [
-    `https://cdn.jsdelivr.net/npm/${base}`,
-    `https://unpkg.com/${base}`,
-    `https://gcore.jsdelivr.net/npm/${base}`,
-  ];
+function langDownloadUrls(_lang) {
+  // 社区 Scorecard：公开包只用内置 vendor/lang，不再回落 CDN
+  return [];
 }
 
 async function fetchLangGz(plugin, url, _timeoutMs = 60000) {
@@ -6922,19 +6888,9 @@ async function ensureOcrLangCached(plugin, onProgress) {
     if (gz) {
       onProgress?.(`正在解压内置${label}语言包…`);
     } else {
-      let lastErr = null;
-      for (const url of langDownloadUrls(lang)) {
-        try {
-          onProgress?.(`正在下载${label}语言包…`);
-          gz = await fetchLangGz(plugin, url);
-          break;
-        } catch (e) {
-          lastErr = e;
-        }
-      }
-      if (!gz) {
-        throw new Error(`语言包下载失败（${label}），请检查网络。${lastErr?.message || ""}`.trim());
-      }
+      throw new Error(
+        `缺少内置语言包（${label}）。请确认插件目录含 vendor/lang/${lang}.traineddata.gz 后重试。`
+      );
     }
 
     const data = gunzip(gz);
@@ -6965,9 +6921,7 @@ function formatOcrError(err) {
 }
 
 function buildTesseractOptions(onProgress) {
-  const ver = "7.0.0";
-  const coreVer = "7.0.0";
-  let workerPath = `https://cdn.jsdelivr.net/npm/tesseract.js@v${ver}/dist/worker.min.js`;
+  let workerPath = "";
   let workerBlobURL = true;
   let localBlobUrl = "";
 
@@ -6977,28 +6931,27 @@ function buildTesseractOptions(onProgress) {
     workerBlobURL = false;
   }
 
-  return {
-    localBlobUrl,
-    options: {
-      workerPath,
-      workerBlobURL,
-      corePath: `https://cdn.jsdelivr.net/npm/tesseract.js-core@v${coreVer}`,
-      cachePath: OCR_CACHE_PATH,
-      cacheMethod: "readwrite",
-      logger: (m) => {
-        if (!onProgress || !m) return;
-        if (m.status === "loading tesseract core") {
-          onProgress("正在加载 OCR 核心…");
-        } else if (m.status === "loading language traineddata") {
-          onProgress("正在加载语言包…");
-        } else if (m.status === "initializing api") {
-          onProgress("正在初始化 OCR…");
-        } else if (m.status === "recognizing text" && typeof m.progress === "number") {
-          onProgress(`识别中 ${Math.round(m.progress * 100)}%`);
-        }
-      },
+  // 社区 Scorecard：公开包不引用 CDN；worker 已内嵌，core 由 tesseract 自带 wasm 路径/默认解析
+  const options = {
+    workerPath: workerPath || undefined,
+    workerBlobURL,
+    cachePath: OCR_CACHE_PATH,
+    cacheMethod: "readwrite",
+    logger: (m) => {
+      if (!onProgress || !m) return;
+      if (m.status === "loading tesseract core") {
+        onProgress("正在加载 OCR 核心…");
+      } else if (m.status === "loading language traineddata") {
+        onProgress("正在加载语言包…");
+      } else if (m.status === "initializing api") {
+        onProgress("正在初始化 OCR…");
+      } else if (m.status === "recognizing text" && typeof m.progress === "number") {
+        onProgress(`识别中 ${Math.round(m.progress * 100)}%`);
+      }
     },
   };
+
+  return { localBlobUrl, options };
 }
 
 async function runTesseractOcr(blob, plugin, onProgress) {
@@ -7464,7 +7417,7 @@ function openCapturePanel(plugin, opts = {}) {
   });
 }
 
-// ─── iconfont.cn 图标搜索与选择 ───────────────────────────────────────────────
+// ─── 分类/订阅图标选择（上传 / emoji；在线库已关闭） ─────────────────────────
 
 function svgHtmlToDataUrl(svgHtml) {
   const svg = normalizeIconfontSvg(svgHtml);
@@ -7557,31 +7510,11 @@ function rasterizeSvgToPngDataUrl(svg) {
 }
 
 async function searchIconfontIcons(query, page = 1, pageSize = 24) {
-  const q = String(query || "").trim();
-  if (!q) return { icons: [], total: 0 };
-  if (typeof requestUrl !== "function") throw new Error("当前环境不支持网络请求");
-  const body = new URLSearchParams({
-    q,
-    page: String(page),
-    pageSize: String(Math.min(pageSize, 54)),
-    sortType: "updated_at",
-    t: String(Date.now()),
-  }).toString();
-  const res = await requestUrl({
-    url: "https://www.iconfont.cn/api/icon/search.json",
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-      Referer: `https://www.iconfont.cn/search/index?q=${encodeURIComponent(q)}`,
-    },
-    body,
-  });
-  const json = res.json;
-  if (!json || json.code !== 200) {
-    throw new Error(json?.message || "iconfont 搜索失败");
-  }
-  const icons = (json.data?.icons || []).filter((i) => i.show_svg);
-  return { icons, total: json.data?.count || icons.length };
+  // 社区 Scorecard：公开包不再请求第三方图标库，避免外网 Disclosure；请用上传 / emoji
+  void query;
+  void page;
+  void pageSize;
+  throw new Error("公开包已关闭在线图标搜索，请改用上传图片或输入 emoji");
 }
 
 function openIconfontPicker(onPick, opts = {}) {
@@ -7591,7 +7524,7 @@ function openIconfontPicker(onPick, opts = {}) {
   let debounceTimer = null;
 
   openPlgOverlay({
-    title: "从 iconfont 选择图标",
+    title: "选择图标（已关闭在线搜索）",
     cls: "plg-iconfont-overlay",
     wide: true,
     stack: true,
@@ -7599,7 +7532,7 @@ function openIconfontPicker(onPick, opts = {}) {
       addClasses(body, "plg-modal", "plg-iconfont-modal");
       body.createDiv({
         cls: "plg-muted plg-iconfont-hint",
-        text: "数据来自 iconfont.cn，仅供个人学习使用；选中后自动压缩为统一尺寸",
+        text: "公开包已关闭在线图标库；请关闭本窗后改用「上传」或 emoji",
       });
 
       const searchRow = body.createDiv({ cls: "plg-iconfont-search" });
@@ -7719,7 +7652,7 @@ function attachIconfontPickerButton(tools, app, onSelected, draftName = "") {
   const btn = tools.createEl("button", {
     text: "iconfont",
     cls: "plg-btn-plain",
-    attr: { type: "button", title: "从 iconfont.cn 搜索选择" },
+    attr: { type: "button", title: "在线图标搜索已关闭，请用上传或 emoji" },
   });
   btn.onclick = () => {
     openIconfontPicker((picked) => onSelected(picked), {
@@ -7948,7 +7881,7 @@ function buildCategoryIdentityEditor(parent, draft, opts = {}) {
   const clearBtn = tools.createEl("button", { text: "清除图片", cls: "plg-btn-plain", attr: { type: "button" } });
   card.createDiv({
     cls: "plg-muted plg-cat-identity-hint",
-    text: "默认使用名称首字；可上传图片、从 iconfont 搜索或输入 emoji，三者互斥",
+    text: "默认使用名称首字；可上传图片或输入 emoji",
   });
 
   const renderPreview = () => {
@@ -8488,7 +8421,7 @@ function buildBillIdentityEditor(parent, draft, meta = {}) {
     cls: "plg-muted plg-cat-identity-hint",
     text: meta.identityHint || (kind === "recurring"
       ? "先选上方入账位置，再填规则名称；选中二级可继承图标"
-      : "默认使用预设或名称首字；可上传图片、从 iconfont 搜索或输入 emoji"),
+      : "默认使用预设或名称首字；可上传图片或输入 emoji"),
   });
 
   const previewItem = () => {
@@ -12683,7 +12616,7 @@ function renderPlgNavAppearancePanel(panel, plugin, focusOpts) {
 
 // ─── Plugin bootstrap (obsidian import in src/00-obsidian.ts) ────────────────
 
-const PLUGIN_VERSION = "4.0.17";
+const PLUGIN_VERSION = "4.0.18";
 const VIEW_TYPE = "plain-ledger-dashboard";
 const ICON_NAME = "wallet";
 

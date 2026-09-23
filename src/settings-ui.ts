@@ -217,7 +217,7 @@ function buildCategoryIdentityEditor(parent, draft, opts = {}) {
   const clearBtn = tools.createEl("button", { text: "清除图片", cls: "plg-btn-plain", attr: { type: "button" } });
   card.createDiv({
     cls: "plg-muted plg-cat-identity-hint",
-    text: "默认使用名称首字；可上传图片、从 iconfont 搜索或输入 emoji，三者互斥",
+    text: "默认使用名称首字；可上传图片或输入 emoji",
   });
 
   const renderPreview = () => {
@@ -757,7 +757,7 @@ function buildBillIdentityEditor(parent, draft, meta = {}) {
     cls: "plg-muted plg-cat-identity-hint",
     text: meta.identityHint || (kind === "recurring"
       ? "先选上方入账位置，再填规则名称；选中二级可继承图标"
-      : "默认使用预设或名称首字；可上传图片、从 iconfont 搜索或输入 emoji"),
+      : "默认使用预设或名称首字；可上传图片或输入 emoji"),
   });
 
   const previewItem = () => {

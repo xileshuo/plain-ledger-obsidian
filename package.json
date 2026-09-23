@@ -1,6 +1,6 @@
 {
   "name": "plain-ledger-obsidian",
-  "version": "4.0.17",
+  "version": "4.0.18",
   "description": "Standalone ledger for vault-local bills, budgets, subscriptions, and reports.",
   "main": "index.js",
   "scripts": {

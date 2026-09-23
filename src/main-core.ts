@@ -1,6 +1,6 @@
 // ─── Plugin bootstrap (obsidian import in src/00-obsidian.ts) ────────────────
 
-const PLUGIN_VERSION = "4.0.17";
+const PLUGIN_VERSION = "4.0.18";
 const VIEW_TYPE = "plain-ledger-dashboard";
 const ICON_NAME = "wallet";
 

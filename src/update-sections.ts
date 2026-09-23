@@ -10,6 +10,9 @@ const PLUGIN_PHILOSOPHY_SUBTITLE =
 
 /** 按版本维护；弹窗默认展开最新版，历史版本点击展开 */
 const PLUGIN_CHANGELOG = {
+  "4.0.18": [
+    "审核：去掉 iconfont / favicon / OCR CDN 外网请求，降低 Scorecard 风险披露",
+  ],
   "4.0.17": [
     "审核：manifest.description 改以英文句号结尾（Scorecard 不认中文 。）",
   ],
