@@ -429,7 +429,7 @@ function renderLifeOsLicenseSettingsPanel(panel, config) {
 function getLifeOsMaxOverlayZIndex() {
   let max = 100000;
   const nodes = document.querySelectorAll(
-    ".modal-container, .modal-bg, .modal, .vertical-tab-content, .vertical-tab-header, .menu, .suggestion-container, .popover, .workspace-leaf-content"
+    ".modal-container, .modal-bg, .modal, .vertical-tab-content, .vertical-tab-header, .menu, .suggestion-container, .popover, .workspace-leaf-content, .plg-overlay, .lifeos-overlay"
   );
   nodes.forEach((el) => {
     try {
@@ -495,12 +495,15 @@ function elevateLifeOsUpdateModal(modal) {
     if (!container) return;
     container.addClass("lifeos-update-modal-host");
     applyCssProps(container, { "--lifeos-update-z": z });
+    try { container.style.setProperty("z-index", z, "important"); } catch (_) { container.style.zIndex = z; }
     const bg = container.querySelector(".modal-bg");
     if (bg) {
       bg.addClass("lifeos-update-modal-bg");
       applyCssProps(bg, { "--lifeos-update-z": z });
+      try { bg.style.setProperty("z-index", z, "important"); } catch (_) { bg.style.zIndex = z; }
     }
     applyCssProps(modal.modalEl, { "--lifeos-update-z": z });
+    try { modal.modalEl.style.setProperty("z-index", z, "important"); } catch (_) { modal.modalEl.style.zIndex = z; }
   };
   window.requestAnimationFrame(() => {
     apply();

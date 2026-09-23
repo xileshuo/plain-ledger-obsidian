@@ -1,7 +1,7 @@
 # PlainLedger
 > **付费 · 48 小时试用 · ¥39.9 永久激活**
 Obsidian 独立记账面板（LifeOS）。账单、分类、订阅规则保存在库内 JSON，随库同步。
-当前公开版本：**4.0.20 · 48 小时试用**
+当前公开版本：**4.0.24 · 48 小时试用**
 ## 定价与购买
 | 项目 | 说明 |
 | --- | --- |
@@ -273,6 +273,25 @@ Obsidian **设置 → 第三方插件 → PlainLedger** 与面板激活页 **高
 
 **Obsidian 是你的知识库，PlainLedger 是你的账本——数据留在库里，记一笔、看统计、管订阅，都在同一个面板完成。**
 ## 更新日志
+### 4.0.24
+
+- 外观：设置内二级弹层标题左右内边距，避免贴边
+
+### 4.0.23
+
+- 修复：设置里点编辑/iconfont 被设置窗盖住（改用 Obsidian 原生 Modal 叠层）
+- 外观：设置页与相关滚动区统一无痕滚动（隐藏滚动条）
+
+### 4.0.22
+
+- 修复：Obsidian 设置里点编辑/iconfont 时二级面板被设置窗盖住（Popover 顶层 + 挂进 .modal）
+
+### 4.0.21
+
+- 修复：侧栏切到 PlainLedger 时 inset 观察过宽导致界面卡顿
+- 修复：设置内更换图标时二级面板挂到设置模态最上层（对齐折柳叠层逻辑）
+- 外观：导航彩色图标与侧栏钱包图标恢复为 4.0.3
+
 ### 4.0.20
 
 - 修复：手机端账本本年/本月/本周与预算区网格未占满整行导致数字叠在一起
@@ -291,24 +310,6 @@ Obsidian **设置 → 第三方插件 → PlainLedger** 与面板激活页 **高
 ### 4.0.17
 
 - 审核：manifest.description 改以英文句号结尾（Scorecard 不认中文 。）
-
-### 4.0.16
-
-- 设置：体验包激活后标题显示「公版」，不再写「48小时体验版」
-
-### 4.0.15
-
-- 审核：去掉记一笔 Tab 的 !important；build 默认 trial48h；package license=MIT
-- 审核：manifest 英文 description；README 版本对齐；新增 release-check
-
-### 4.0.14
-
-- 修复：记一笔三 Tab 叠层显示（截图页串入智能/手动内容）
-- 修复：侧栏图标改回钱包；主面板无痕滚动（隐藏滚动条）
-
-### 4.0.13
-
-- 修复：插件启用加载失败（日历热力 CSS 属性语法错误）
 ---
 ## 分发说明
 本仓库用于社区插件 / BRAT / GitHub Release 分发与产品介绍，并附带 `src/` 等源码便于社区审核。
@@ -324,7 +325,7 @@ Obsidian **设置 → 第三方插件 → PlainLedger** 与面板激活页 **高
 
 PlainLedger is a paid LifeOS ledger panel for Obsidian. Bills, categories, and subscription rules stay in vault JSON and sync with your vault.
 
-Current public build: **4.0.20** (48-hour trial).
+Current public build: **4.0.24** (48-hour trial).
 
 ## LifeOS family
 

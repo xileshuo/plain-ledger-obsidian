@@ -59,18 +59,176 @@ function elCls(parent, tag, cls, opts = {}) {
   return el;
 }
 
-function getOverlayHost() {
-  if (isMobileCaptureUi()) {
-    const settingsModal = document.querySelector(
-      ".modal.mod-settings:not(.is-hidden), .modal-container .modal.mod-settings"
-    );
-    if (settingsModal) return settingsModal;
-    const modalHost = document.querySelector(".modal-container");
-    if (modalHost?.children?.length) return modalHost;
+function pickFrontModalContainer() {
+  const containers = [...document.querySelectorAll(".modal-container")].filter((c) => {
+    try {
+      if (!c.querySelector?.(".modal")) return false;
+      return c.getClientRects?.().length > 0 || c.offsetParent !== null;
+    } catch (_) {
+      return false;
+    }
+  });
+  if (!containers.length) return null;
+  let best = containers[containers.length - 1];
+  let bestZ = -1;
+  for (const c of containers) {
+    try {
+      const raw = c.style?.zIndex || window.getComputedStyle(c).zIndex || "0";
+      const z = parseInt(raw, 10);
+      if (!Number.isNaN(z) && z >= bestZ) {
+        bestZ = z;
+        best = c;
+      }
+    } catch (_) { /* ignore */ }
+  }
+  return best;
+}
+
+function getPlgApp() {
+  try {
+    if (typeof app !== "undefined" && app) return app;
+  } catch (_) { /* ignore */ }
+  try {
+    return window.app || globalThis.app || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+/** 设置窗或其它 Obsidian 模态已打开时，必须走原生 Modal 才能压在上面 */
+function shouldUseObsidianModalHost() {
+  const a = getPlgApp();
+  if (a && typeof isObsidianSettingsOpen === "function" && isObsidianSettingsOpen(a)) return true;
+  return !!pickFrontModalContainer();
+}
+
+function getOverlayHost(stack = false) {
+  if (stack) {
+    const tops = [...document.querySelectorAll(".plg-overlay, .lifeos-overlay")];
+    const top = tops[tops.length - 1];
+    if (top?.parentElement) return top.parentElement;
   }
   const body = document.body;
   if (body && (body.clientHeight > 0 || body.clientWidth > 0)) return body;
   return document.documentElement;
+}
+
+function readOverlayZ(el) {
+  try {
+    const raw = el?.style?.zIndex || (el ? window.getComputedStyle(el).zIndex : "0") || "0";
+    const z = parseInt(raw, 10);
+    return Number.isNaN(z) ? 0 : z;
+  } catch (_) {
+    return 0;
+  }
+}
+
+function getPlgFrontOverlayZ() {
+  let max = typeof getLifeOsMaxOverlayZIndex === "function" ? getLifeOsMaxOverlayZIndex() : 100000;
+  document.querySelectorAll(".plg-overlay, .lifeos-overlay").forEach((el) => {
+    const z = readOverlayZ(el);
+    if (z > max) max = z;
+  });
+  return max;
+}
+
+function elevatePlgModalLayer(modal) {
+  const apply = () => {
+    if (!modal?.modalEl) return;
+    const z = String(Math.max(
+      typeof getLifeOsMaxOverlayZIndex === "function" ? getLifeOsMaxOverlayZIndex() : 100000,
+      5001000
+    ) + 200);
+    const container = modal.modalEl.closest(".modal-container");
+    if (container) {
+      container.addClass("plg-obsidian-modal-layer");
+      try {
+        container.style.setProperty("z-index", z, "important");
+      } catch (_) {
+        container.style.zIndex = z;
+      }
+      const bg = container.querySelector(".modal-bg");
+      if (bg) {
+        try { bg.style.setProperty("z-index", z, "important"); } catch (_) { bg.style.zIndex = z; }
+      }
+    }
+    try {
+      modal.modalEl.style.setProperty("z-index", z, "important");
+    } catch (_) {
+      modal.modalEl.style.zIndex = z;
+    }
+  };
+  apply();
+  window.requestAnimationFrame(() => {
+    apply();
+    window.requestAnimationFrame(apply);
+  });
+  window.setTimeout(apply, 40);
+  window.setTimeout(apply, 160);
+}
+
+const _plgOverlayModalStack = [];
+
+class PlgOverlayModal extends Modal {
+  constructor(appRef, opts) {
+    super(appRef);
+    this.plgOpts = opts || {};
+  }
+
+  onOpen() {
+    const { title, cls = "", wide = false, build, tier = 0 } = this.plgOpts;
+    this.modalEl.addClass("plg-obsidian-modal-host");
+    this.modalEl.addClass("lifeos-overlay-panel");
+    if (wide) this.modalEl.addClass("plg-obsidian-modal-wide");
+    if (cls) addClasses(this.modalEl, cls);
+    if (tier === 2) this.modalEl.addClass("plg-overlay-tier2");
+    else if (tier === 3) this.modalEl.addClass("plg-overlay-tier3");
+
+    elevatePlgModalLayer(this);
+
+    if (title) this.titleEl.setText(title);
+    else {
+      this.titleEl.setText("");
+      this.titleEl.addClass("plg-obsidian-modal-no-title");
+    }
+
+    const body = this.contentEl;
+    body.empty();
+    addClasses(body, "plg-overlay-body", "lifeos-overlay-body");
+
+    const close = () => this.close();
+    try {
+      build?.(body, close);
+    } catch (err) {
+      body.createEl("p", { text: "加载失败：" + (err.message || String(err)) });
+      console.error("[PlainLedger]", err);
+    }
+  }
+
+  onClose() {
+    try { this.contentEl.empty(); } catch (_) { /* ignore */ }
+    const idx = _plgOverlayModalStack.indexOf(this);
+    if (idx >= 0) _plgOverlayModalStack.splice(idx, 1);
+  }
+}
+
+function closePlgOverlayModals() {
+  while (_plgOverlayModalStack.length) {
+    const m = _plgOverlayModalStack.pop();
+    try { m.close(); } catch (_) { /* ignore */ }
+  }
+}
+
+function openPlgOverlayViaObsidianModal(opts) {
+  const appRef = getPlgApp();
+  if (!appRef || typeof Modal !== "function") return null;
+  const modal = new PlgOverlayModal(appRef, opts);
+  _plgOverlayModalStack.push(modal);
+  modal.open();
+  elevatePlgModalLayer(modal);
+  return () => {
+    try { modal.close(); } catch (_) { /* ignore */ }
+  };
 }
 
 /** Mobile-friendly modal body: scroll region + sticky action bar (matches plg-edit-overlay). */
@@ -140,31 +298,41 @@ function attachOverlayPanelDrag(overlay, panel, head) {
   window.addEventListener("mouseup", onUp);
 }
 
-function openPlgOverlay(opts) {
-  injectLifeOsSharedStyles();
-  const { title, cls = "", wide = false, build, stack = false, tier = 0 } = opts;
-  if (!stack) {
-    // 只清 PlainLedger 自己的 overlay，勿误关其它 LifeOS 插件弹层
-    document.querySelectorAll(".plg-overlay").forEach((el) => el.remove());
-  }
-  // 始终挂到 body 末尾，避免落在设置滚动容器里被裁切 / 盖住
-  const host = document.body || document.documentElement;
-  const overlay = host.createDiv({ cls: "plg-overlay" });
-  addClasses(overlay, "lifeos-overlay");
-  try { host.appendChild(overlay); } catch (_) { /* already attached */ }
-  const isCapture = String(cls).includes("plg-capture-overlay");
-  const depth = document.querySelectorAll(".lifeos-overlay, .plg-overlay").length;
-  const settingsZ = typeof getLifeOsMaxOverlayZIndex === "function" ? getLifeOsMaxOverlayZIndex() : 0;
-  const floorZ = isCapture ? 1000050 : 1000000;
-  // 二级/三级弹层叠在一级之上；并压过 Obsidian 设置模态（各库主题 z-index 可能不同）
-  const tierBoost = Math.max(0, Number(tier) || 0) * 200;
-  const z = Math.max(floorZ, settingsZ) + tierBoost + depth * 50;
+function applyPlgOverlayZ(overlay, z) {
   applyCssProps(overlay, { "--plg-overlay-z": String(z) });
   try {
     overlay.style.setProperty("z-index", String(z), "important");
   } catch (_) {
     overlay.style.zIndex = String(z);
   }
+}
+
+function openPlgOverlay(opts) {
+  injectLifeOsSharedStyles();
+  const { title, cls = "", wide = false, build, stack = false, tier = 0 } = opts;
+  if (!stack) {
+    // 只清 PlainLedger 自己的 overlay / 原生 Modal 叠层，勿误关其它 LifeOS 插件弹层
+    document.querySelectorAll(".plg-overlay").forEach((el) => el.remove());
+    closePlgOverlayModals();
+  }
+
+  // 木木夕等：设置窗打开时必须用 Obsidian Modal 才能压在设置上面
+  if (shouldUseObsidianModalHost()) {
+    const closer = openPlgOverlayViaObsidianModal(opts);
+    if (closer) return closer;
+  }
+
+  const host = getOverlayHost(stack);
+  const overlay = host.createDiv({ cls: "plg-overlay" });
+  addClasses(overlay, "lifeos-overlay");
+  try { host.appendChild(overlay); } catch (_) { /* already attached */ }
+
+  const isCapture = String(cls).includes("plg-capture-overlay");
+  const depth = document.querySelectorAll(".lifeos-overlay, .plg-overlay").length;
+  const floorZ = isCapture ? 1000050 : 1000000;
+  const tierBoost = Math.max(0, Number(tier) || 0) * 100;
+  const z = Math.max(floorZ, getPlgFrontOverlayZ()) + 100 + tierBoost + depth;
+  applyPlgOverlayZ(overlay, z);
   if (isCapture && isMobileCaptureUi()) overlay.addClass("plg-capture-sheet-host");
   const panel = overlay.createDiv({ cls: "plg-overlay-panel" });
   addClasses(panel, "lifeos-overlay-panel", cls, wide ? "wide" : "");
@@ -189,15 +357,11 @@ function openPlgOverlay(opts) {
     close();
   });
   panel.addEventListener("click", (e) => e.stopPropagation());
-  // 挂载后再抬一次：部分主题/手机端在打开设置后才会把 modal z-index 写高
   window.requestAnimationFrame(() => {
     try {
-      const again = typeof getLifeOsMaxOverlayZIndex === "function" ? getLifeOsMaxOverlayZIndex() : settingsZ;
-      const z2 = Math.max(z, again + tierBoost + depth * 50);
-      if (z2 > z) {
-        applyCssProps(overlay, { "--plg-overlay-z": String(z2) });
-        overlay.style.setProperty("z-index", String(z2), "important");
-      }
+      if (overlay.parentElement) overlay.parentElement.appendChild(overlay);
+      const z2 = Math.max(z, getPlgFrontOverlayZ() + 50);
+      if (z2 > readOverlayZ(overlay)) applyPlgOverlayZ(overlay, z2);
     } catch (_) { /* ignore */ }
     try {
       build(body, close);

@@ -1,4 +1,4 @@
-import { Plugin, Notice, addIcon } from "obsidian";
+import { Plugin, Notice } from "obsidian";
 import {
   DEFAULT_SETTINGS,
   VIEW_TYPE,
@@ -21,11 +21,7 @@ export class PlainLedgerPlugin extends Plugin {
 
   async onload(): Promise<void> {
     await this.loadSettings();
-    addIcon(
-      ICON_NAME,
-      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>`
-    );
-
+    // 与 4.0.3 一致：使用 Obsidian 内置 wallet，不注册自定义 SVG
     this.addRibbonIcon(ICON_NAME, "PlainLedger", () => {
       void this.activateView();
     });

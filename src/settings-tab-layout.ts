@@ -37,15 +37,17 @@ function appendPlgMobileTopSpacer(containerEl) {
 }
 
 function applyPlgMobileSettingsLayout(containerEl, app) {
-  document.querySelectorAll(".plg-settings-mobile-host").forEach((el) => {
+  document.querySelectorAll(".plg-settings-mobile-host, .plg-settings-host").forEach((el) => {
     el.removeClass("plg-settings-mobile-host");
+    el.removeClass("plg-settings-host");
   });
-  const isMobile = app?.isMobile || Platform.isMobileApp;
-  if (!isMobile) return;
   injectPlgSettingsCompactStyles();
   const host = containerEl.closest(".vertical-tab-content")
     || containerEl.closest(".vertical-tab-content-container")
     || containerEl.parentElement;
+  host?.addClass("plg-settings-host");
+  const isMobile = app?.isMobile || Platform.isMobileApp;
+  if (!isMobile) return;
   host?.addClass("plg-settings-mobile-host");
   appendPlgMobileTopSpacer(containerEl);
 }

@@ -2980,6 +2980,69 @@ input.plg-budget-title-input.plg-budget-val-inline {
   overflow: visible;
 }
 
+/* 挂在设置 .modal / modal-container 内时仍铺满视口，并压过一级面板 */
+.modal > .plg-overlay,
+.modal-container > .plg-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  pointer-events: auto;
+}
+
+/* 设置内二级面板：走 Obsidian Modal，叠在设置窗之上 */
+.modal.plg-obsidian-modal-host {
+  width: min(420px, 92vw);
+  max-width: 92vw;
+  max-height: min(90vh, 720px);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.modal.plg-obsidian-modal-host.plg-obsidian-modal-wide {
+  width: min(480px, 94vw);
+}
+
+.modal.plg-obsidian-modal-host .modal-title {
+  padding: 16px 48px 10px 16px;
+  margin: 0;
+  font-size: 1.05em;
+  font-weight: 700;
+  line-height: 1.35;
+  box-sizing: border-box;
+}
+
+.modal.plg-obsidian-modal-host .modal-close-button {
+  top: 14px;
+  right: 12px;
+}
+
+.modal.plg-obsidian-modal-host .modal-title.plg-obsidian-modal-no-title,
+.modal.plg-obsidian-modal-host .plg-obsidian-modal-no-title {
+  display: none;
+}
+
+.modal.plg-obsidian-modal-host .modal-content,
+.modal.plg-obsidian-modal-host .plg-overlay-body {
+  overflow: auto;
+  max-height: min(78vh, 640px);
+  padding: 4px 16px 16px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.modal.plg-obsidian-modal-host .modal-content::-webkit-scrollbar,
+.modal.plg-obsidian-modal-host .plg-overlay-body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.modal-container.plg-obsidian-modal-layer {
+  z-index: var(--plg-overlay-z, 5001200);
+}
+
 .plg-overlay-panel {
   background: var(--background-primary);
   border-radius: 16px;
@@ -14605,7 +14668,21 @@ body.plg-capture-kb-open .plg-overlay-mobile-fit .plg-smart-panel .plg-capture-t
 .plg-overlay-mobile-fit .plg-manual-panel .plg-cat-grid-mobile-grid,
 .plg-overlay-panel.plg-tx-history-overlay .plg-sub-history-list,
 .plg-overlay-panel.plg-capture-overlay:not(.plg-overlay-panel-mobile-fit) .plg-manual-panel .plg-cat-grid-desktop-2row,
-.plg-overlay-panel.plg-capture-overlay:not(.plg-overlay-panel-mobile-fit) .plg-manual-panel .plg-cat-grid-manual {
+.plg-overlay-panel.plg-capture-overlay:not(.plg-overlay-panel-mobile-fit) .plg-manual-panel .plg-cat-grid-manual,
+.plg-settings-host,
+.plg-settings-host.vertical-tab-content,
+.vertical-tab-content.plg-settings-host,
+.vertical-tab-content-container:has(.plg-settings-host),
+.modal.mod-settings .vertical-tab-content:has(.plg-settings-tab-bar),
+.modal.mod-settings .vertical-tab-content-container:has(.plg-settings-tab-bar),
+.plg-settings-panels,
+.plg-settings-panel,
+.plg-settings-cat-list,
+.plg-nav-appearance-card,
+.plg-settings-block-body,
+.plg-settings-section-body,
+.modal.plg-obsidian-modal-host .modal-content,
+.modal.plg-obsidian-modal-host .plg-overlay-body {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -14620,7 +14697,21 @@ body.plg-capture-kb-open .plg-overlay-mobile-fit .plg-smart-panel .plg-capture-t
 .plg-overlay-mobile-fit .plg-manual-panel .plg-cat-grid-mobile-grid::-webkit-scrollbar,
 .plg-overlay-panel.plg-tx-history-overlay .plg-sub-history-list::-webkit-scrollbar,
 .plg-overlay-panel.plg-capture-overlay:not(.plg-overlay-panel-mobile-fit) .plg-manual-panel .plg-cat-grid-desktop-2row::-webkit-scrollbar,
-.plg-overlay-panel.plg-capture-overlay:not(.plg-overlay-panel-mobile-fit) .plg-manual-panel .plg-cat-grid-manual::-webkit-scrollbar {
+.plg-overlay-panel.plg-capture-overlay:not(.plg-overlay-panel-mobile-fit) .plg-manual-panel .plg-cat-grid-manual::-webkit-scrollbar,
+.plg-settings-host::-webkit-scrollbar,
+.plg-settings-host.vertical-tab-content::-webkit-scrollbar,
+.vertical-tab-content.plg-settings-host::-webkit-scrollbar,
+.vertical-tab-content-container:has(.plg-settings-host)::-webkit-scrollbar,
+.modal.mod-settings .vertical-tab-content:has(.plg-settings-tab-bar)::-webkit-scrollbar,
+.modal.mod-settings .vertical-tab-content-container:has(.plg-settings-tab-bar)::-webkit-scrollbar,
+.plg-settings-panels::-webkit-scrollbar,
+.plg-settings-panel::-webkit-scrollbar,
+.plg-settings-cat-list::-webkit-scrollbar,
+.plg-nav-appearance-card::-webkit-scrollbar,
+.plg-settings-block-body::-webkit-scrollbar,
+.plg-settings-section-body::-webkit-scrollbar,
+.modal.plg-obsidian-modal-host .modal-content::-webkit-scrollbar,
+.modal.plg-obsidian-modal-host .plg-overlay-body::-webkit-scrollbar {
   display: none;
   width: 0;
   height: 0;

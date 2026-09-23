@@ -1,7 +1,7 @@
 {
   "id": "plain-ledger",
   "name": "PlainLedger",
-  "version": "4.0.20",
+  "version": "4.0.24",
   "minAppVersion": "1.7.2",
   "description": "库内账单、预算、订阅与报表，数据随库同步（LifeOS）.",
   "author": "囍樂",

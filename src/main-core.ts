@@ -3113,17 +3113,18 @@ class LedgerDashboardView extends ItemView {
       window.visualViewport.addEventListener("resize", this.insetHandler);
       window.visualViewport.addEventListener("scroll", this.insetHandler);
     }
+    // 只观察本 leaf 与少量导航条，勿 observe .app-container（侧栏切换会连触发布局抖动）
     this.insetObserver = new ResizeObserver(() => this.syncMobileInsets());
     this.insetObserver.observe(this.containerEl);
     const observeInsetTargets = Platform.isMobile
-      ? ".status-bar, .app-container, .mobile-toolbar, .navbar-action-bar, .mobile-navbar"
-      : ".status-bar, .app-container";
+      ? ".mobile-toolbar, .navbar-action-bar, .mobile-navbar"
+      : ".status-bar";
     document.querySelectorAll(observeInsetTargets).forEach((el) => {
       try { this.insetObserver.observe(el); } catch (_) { /* ignore */ }
     });
     await this.render();
     if (Platform.isMobile) {
-      [0, 120, 320, 640].forEach((ms) => {
+      [0, 180].forEach((ms) => {
         window.setTimeout(() => this.syncMobileInsets(), ms);
       });
     }
@@ -3144,12 +3145,18 @@ class LedgerDashboardView extends ItemView {
 
   syncMobileInsets() {
     if (!this.root) return;
+    // 非当前活动 leaf 时跳过，避免侧栏切走/切回时无谓重算导致卡顿
+    try {
+      if (this.leaf && this.app?.workspace?.activeLeaf && this.app.workspace.activeLeaf !== this.leaf) {
+        return;
+      }
+    } catch (_) { /* ignore */ }
     if (this._insetTimer) window.clearTimeout(this._insetTimer);
     this._insetTimer = window.setTimeout(() => {
       // 真机才走 safe-area + Obsidian 悬浮导航计算
       if (Platform.isMobile) this._applyMobileLayout();
       else this._applyBottomInset();
-    }, 80);
+    }, 100);
   }
 
   /** 真机专用：按 safe-area 与 Obsidian 悬浮导航算动态 top/bottom inset */
@@ -4811,11 +4818,7 @@ module.exports = class PlainLedgerPlugin extends Plugin {
 
     this.registerView(VIEW_TYPE, (leaf) => new LedgerDashboardView(leaf, this));
 
-    try {
-      if (typeof addIcon === "function") {
-        addIcon(ICON_NAME, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><circle cx="17" cy="14" r="1"/></svg>`);
-      }
-    } catch (_) { /* ignore */ }
+    // 与 4.0.3 一致：使用 Obsidian 内置 wallet，不覆盖自定义 SVG
     try {
       this.addRibbonIcon(ICON_NAME, "打开 PlainLedger", () => this.openDashboard());
     } catch (err) {
