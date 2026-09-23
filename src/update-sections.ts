@@ -10,6 +10,9 @@ const PLUGIN_PHILOSOPHY_SUBTITLE =
 
 /** 按版本维护；弹窗默认展开最新版，历史版本点击展开 */
 const PLUGIN_CHANGELOG = {
+  "4.0.16": [
+    "设置：体验包激活后标题显示「公版」，不再写「48小时体验版」",
+  ],
     "4.0.15": [
     "审核：去掉记一笔 Tab 的 !important；build 默认 trial48h；package license=MIT",
     "审核：manifest 英文 description；README 版本对齐；新增 release-check",

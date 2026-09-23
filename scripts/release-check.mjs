@@ -27,12 +27,15 @@ if (!readme.includes("## Installation") || !readme.includes("## Usage")) {
   failures.push("README.md 缺少英文 Installation/Usage");
 }
 
-const desc = String(manifest.description || "");
-if (/[\u4e00-\u9fff]/.test(desc.split(".")[0] || "")) {
-  // Allow Chinese after English; flag if the description *starts* with CJK
-  if (/^[\u4e00-\u9fff]/.test(desc.trim())) {
-    failures.push("manifest.description 应以英文开头（社区目录偏好）");
-  }
+const desc = String(manifest.description || "").trim();
+if (!desc) {
+  failures.push("manifest.description 不能为空");
+} else if (!/^[\u4e00-\u9fff]/.test(desc)) {
+  // 库内/市场列表介绍用纯中文
+  failures.push("manifest.description 应以中文开头（纯中文介绍）");
+} else if (/[A-Za-z]{4,}/.test(desc) && !/LifeOS|Moments|iCal|OCR|Tab/.test(desc)) {
+  // 允许专有名词；长英文句视为未改干净
+  failures.push("manifest.description 应保持纯中文（专有名词除外）");
 }
 
 const styles = read("styles.css");

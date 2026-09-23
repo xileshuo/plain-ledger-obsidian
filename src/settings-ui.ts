@@ -2738,8 +2738,8 @@ function renderPluginSettings(container, plugin, onRefresh, focusOpts = null) {
     new Setting(container)
       .setName(
         typeof formatPluginSettingsTitle === "function"
-          ? formatPluginSettingsTitle("PlainLedger 配置", getPlgEditionLabel())
-          : `PlainLedger 配置 · ${getPlgEditionLabel()}`
+          ? formatPluginSettingsTitle("PlainLedger 配置", getPlgEditionLabel(plugin))
+          : `PlainLedger 配置 · ${getPlgEditionLabel(plugin)}`
       )
       .setHeading()
       .setClass("plg-settings-page-title");

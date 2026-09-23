@@ -4,8 +4,10 @@ const PLG_SETTINGS_STYLE_ID = "plg-settings-compact-styles-v3";
 const PLG_MOBILE_TOP_INSET_PX = 41;
 const PLG_MOBILE_TOP_SPACER_CLASS = "plg-mobile-top-spacer";
 
-function getPlgEditionLabel() {
+function getPlgEditionLabel(plugin) {
+  // 体验包激活后按「公版」展示，避免标题仍写「48小时体验版」造成歧义
   if (typeof isTrialEdition === "function" && isTrialEdition()) {
+    if (plugin?.settings?.licenseActivated) return "公版";
     const h = typeof getTrialHoursLabel === "function" ? getTrialHoursLabel() : "";
     return h ? `${h}体验版` : "48小时体验版";
   }

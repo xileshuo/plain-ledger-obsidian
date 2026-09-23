@@ -6,8 +6,9 @@ function getLifeOsReleaseLabel() {
   return LIFEOS_RELEASE;
 }
 
-function getEditionDisplayName() {
+function getEditionDisplayName(settings) {
   if (typeof isTrialEdition === "function" && isTrialEdition()) {
+    if (settings?.licenseActivated) return "公版";
     const h = typeof getTrialHoursLabel === "function" ? getTrialHoursLabel() : "";
     return h ? `${h}体验版` : "48小时体验版";
   }

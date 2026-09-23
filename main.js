@@ -230,8 +230,9 @@ function getLifeOsReleaseLabel() {
   return LIFEOS_RELEASE;
 }
 
-function getEditionDisplayName() {
+function getEditionDisplayName(settings) {
   if (typeof isTrialEdition === "function" && isTrialEdition()) {
+    if (settings?.licenseActivated) return "公版";
     const h = typeof getTrialHoursLabel === "function" ? getTrialHoursLabel() : "";
     return h ? `${h}体验版` : "48小时体验版";
   }
@@ -1474,6 +1475,9 @@ const PLUGIN_PHILOSOPHY_SUBTITLE =
 
 /** 按版本维护；弹窗默认展开最新版，历史版本点击展开 */
 const PLUGIN_CHANGELOG = {
+  "4.0.16": [
+    "设置：体验包激活后标题显示「公版」，不再写「48小时体验版」",
+  ],
     "4.0.15": [
     "审核：去掉记一笔 Tab 的 !important；build 默认 trial48h；package license=MIT",
     "审核：manifest 英文 description；README 版本对齐；新增 release-check",
@@ -2022,8 +2026,10 @@ const PLG_SETTINGS_STYLE_ID = "plg-settings-compact-styles-v3";
 const PLG_MOBILE_TOP_INSET_PX = 41;
 const PLG_MOBILE_TOP_SPACER_CLASS = "plg-mobile-top-spacer";
 
-function getPlgEditionLabel() {
+function getPlgEditionLabel(plugin) {
+  // 体验包激活后按「公版」展示，避免标题仍写「48小时体验版」造成歧义
   if (typeof isTrialEdition === "function" && isTrialEdition()) {
+    if (plugin?.settings?.licenseActivated) return "公版";
     const h = typeof getTrialHoursLabel === "function" ? getTrialHoursLabel() : "";
     return h ? `${h}体验版` : "48小时体验版";
   }
@@ -10460,8 +10466,8 @@ function renderPluginSettings(container, plugin, onRefresh, focusOpts = null) {
     new Setting(container)
       .setName(
         typeof formatPluginSettingsTitle === "function"
-          ? formatPluginSettingsTitle("PlainLedger 配置", getPlgEditionLabel())
-          : `PlainLedger 配置 · ${getPlgEditionLabel()}`
+          ? formatPluginSettingsTitle("PlainLedger 配置", getPlgEditionLabel(plugin))
+          : `PlainLedger 配置 · ${getPlgEditionLabel(plugin)}`
       )
       .setHeading()
       .setClass("plg-settings-page-title");
@@ -12674,7 +12680,7 @@ function renderPlgNavAppearancePanel(panel, plugin, focusOpts) {
 
 // ─── Plugin bootstrap (obsidian import in src/00-obsidian.ts) ────────────────
 
-const PLUGIN_VERSION = "4.0.15";
+const PLUGIN_VERSION = "4.0.16";
 const VIEW_TYPE = "plain-ledger-dashboard";
 const ICON_NAME = "wallet";
 
