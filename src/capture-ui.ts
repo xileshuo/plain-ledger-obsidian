@@ -147,14 +147,18 @@ function openPlgOverlay(opts) {
     // 只清 PlainLedger 自己的 overlay，勿误关其它 LifeOS 插件弹层
     document.querySelectorAll(".plg-overlay").forEach((el) => el.remove());
   }
-  const host = getOverlayHost();
-  const inObsidianModal = host !== document.body && host !== document.documentElement;
+  // 始终挂到 body，避免落在 Obsidian 设置滚动容器里被裁切 / 盖住
+  const host = document.body || document.documentElement;
   const overlay = host.createDiv({ cls: "plg-overlay" });
   addClasses(overlay, "lifeos-overlay");
   const isCapture = String(cls).includes("plg-capture-overlay");
   const depth = document.querySelectorAll(".lifeos-overlay, .plg-overlay").length;
-  const baseZ = isCapture ? 1000050 : (inObsidianModal ? 1000200 : 1000000);
-  applyCssProps(overlay, { "--plg-overlay-z": String(baseZ + depth * 10) });
+  const settingsZ = typeof getLifeOsMaxOverlayZIndex === "function" ? getLifeOsMaxOverlayZIndex() : 0;
+  const floorZ = isCapture ? 1000050 : 1000000;
+  // 二级/三级弹层叠在一级之上；并压过 Obsidian 设置模态
+  const tierBoost = Math.max(0, Number(tier) || 0) * 100;
+  const baseZ = Math.max(floorZ, settingsZ) + tierBoost;
+  applyCssProps(overlay, { "--plg-overlay-z": String(baseZ + depth * 30) });
   if (isCapture && isMobileCaptureUi()) overlay.addClass("plg-capture-sheet-host");
   const panel = overlay.createDiv({ cls: "plg-overlay-panel" });
   addClasses(panel, "lifeos-overlay-panel", cls, wide ? "wide" : "");
@@ -2089,9 +2093,13 @@ async function readBundledLangGz(plugin, lang) {
   return null;
 }
 
-function langDownloadUrls(_lang) {
-  // 社区 Scorecard：公开包只用内置 vendor/lang，不再回落 CDN
-  return [];
+function langDownloadUrls(lang) {
+  const base = `@tesseract.js-data/${lang}/4.0.0_best_int/${lang}.traineddata.gz`;
+  return [
+    `https://cdn.jsdelivr.net/npm/${base}`,
+    `https://unpkg.com/${base}`,
+    `https://gcore.jsdelivr.net/npm/${base}`,
+  ];
 }
 
 async function fetchLangGz(plugin, url, _timeoutMs = 60000) {
@@ -2117,9 +2125,19 @@ async function ensureOcrLangCached(plugin, onProgress) {
     if (gz) {
       onProgress?.(`正在解压内置${label}语言包…`);
     } else {
-      throw new Error(
-        `缺少内置语言包（${label}）。请确认插件目录含 vendor/lang/${lang}.traineddata.gz 后重试。`
-      );
+      let lastErr = null;
+      for (const url of langDownloadUrls(lang)) {
+        try {
+          onProgress?.(`正在下载${label}语言包…`);
+          gz = await fetchLangGz(plugin, url);
+          break;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      if (!gz) {
+        throw new Error(`语言包下载失败（${label}），请检查网络。${lastErr?.message || ""}`.trim());
+      }
     }
 
     const data = gunzip(gz);
@@ -2150,7 +2168,9 @@ function formatOcrError(err) {
 }
 
 function buildTesseractOptions(onProgress) {
-  let workerPath = "";
+  const ver = "7.0.0";
+  const coreVer = "7.0.0";
+  let workerPath = `https://cdn.jsdelivr.net/npm/tesseract.js@v${ver}/dist/worker.min.js`;
   let workerBlobURL = true;
   let localBlobUrl = "";
 
@@ -2160,27 +2180,28 @@ function buildTesseractOptions(onProgress) {
     workerBlobURL = false;
   }
 
-  // 社区 Scorecard：公开包不引用 CDN；worker 已内嵌，core 由 tesseract 自带 wasm 路径/默认解析
-  const options = {
-    workerPath: workerPath || undefined,
-    workerBlobURL,
-    cachePath: OCR_CACHE_PATH,
-    cacheMethod: "readwrite",
-    logger: (m) => {
-      if (!onProgress || !m) return;
-      if (m.status === "loading tesseract core") {
-        onProgress("正在加载 OCR 核心…");
-      } else if (m.status === "loading language traineddata") {
-        onProgress("正在加载语言包…");
-      } else if (m.status === "initializing api") {
-        onProgress("正在初始化 OCR…");
-      } else if (m.status === "recognizing text" && typeof m.progress === "number") {
-        onProgress(`识别中 ${Math.round(m.progress * 100)}%`);
-      }
+  return {
+    localBlobUrl,
+    options: {
+      workerPath,
+      workerBlobURL,
+      corePath: `https://cdn.jsdelivr.net/npm/tesseract.js-core@v${coreVer}`,
+      cachePath: OCR_CACHE_PATH,
+      cacheMethod: "readwrite",
+      logger: (m) => {
+        if (!onProgress || !m) return;
+        if (m.status === "loading tesseract core") {
+          onProgress("正在加载 OCR 核心…");
+        } else if (m.status === "loading language traineddata") {
+          onProgress("正在加载语言包…");
+        } else if (m.status === "initializing api") {
+          onProgress("正在初始化 OCR…");
+        } else if (m.status === "recognizing text" && typeof m.progress === "number") {
+          onProgress(`识别中 ${Math.round(m.progress * 100)}%`);
+        }
+      },
     },
   };
-
-  return { localBlobUrl, options };
 }
 
 async function runTesseractOcr(blob, plugin, onProgress) {

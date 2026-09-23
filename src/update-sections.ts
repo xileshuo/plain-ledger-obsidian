@@ -10,6 +10,11 @@ const PLUGIN_PHILOSOPHY_SUBTITLE =
 
 /** 按版本维护；弹窗默认展开最新版，历史版本点击展开 */
 const PLUGIN_CHANGELOG = {
+  "4.0.19": [
+    "恢复：iconfont 在线搜索、订阅 favicon（DuckDuckGo / Google）与 OCR CDN 原逻辑",
+    "修复：设置内 iconfont 二级面板 z-index，挂到 body 并压过一级设置窗",
+    "外观：导航默认图标按 vendor 最初彩色 SVG 对齐",
+  ],
   "4.0.18": [
     "审核：去掉 iconfont / favicon / OCR CDN 外网请求，降低 Scorecard 风险披露",
   ],

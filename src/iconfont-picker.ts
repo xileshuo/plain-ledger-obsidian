@@ -1,4 +1,4 @@
-// ─── 分类/订阅图标选择（上传 / emoji；在线库已关闭） ─────────────────────────
+// ─── iconfont.cn 图标搜索与选择 ───────────────────────────────────────────────
 
 function svgHtmlToDataUrl(svgHtml) {
   const svg = normalizeIconfontSvg(svgHtml);
@@ -91,11 +91,31 @@ function rasterizeSvgToPngDataUrl(svg) {
 }
 
 async function searchIconfontIcons(query, page = 1, pageSize = 24) {
-  // 社区 Scorecard：公开包不再请求第三方图标库，避免外网 Disclosure；请用上传 / emoji
-  void query;
-  void page;
-  void pageSize;
-  throw new Error("公开包已关闭在线图标搜索，请改用上传图片或输入 emoji");
+  const q = String(query || "").trim();
+  if (!q) return { icons: [], total: 0 };
+  if (typeof requestUrl !== "function") throw new Error("当前环境不支持网络请求");
+  const body = new URLSearchParams({
+    q,
+    page: String(page),
+    pageSize: String(Math.min(pageSize, 54)),
+    sortType: "updated_at",
+    t: String(Date.now()),
+  }).toString();
+  const res = await requestUrl({
+    url: "https://www.iconfont.cn/api/icon/search.json",
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+      Referer: `https://www.iconfont.cn/search/index?q=${encodeURIComponent(q)}`,
+    },
+    body,
+  });
+  const json = res.json;
+  if (!json || json.code !== 200) {
+    throw new Error(json?.message || "iconfont 搜索失败");
+  }
+  const icons = (json.data?.icons || []).filter((i) => i.show_svg);
+  return { icons, total: json.data?.count || icons.length };
 }
 
 function openIconfontPicker(onPick, opts = {}) {
@@ -105,15 +125,16 @@ function openIconfontPicker(onPick, opts = {}) {
   let debounceTimer = null;
 
   openPlgOverlay({
-    title: "选择图标（已关闭在线搜索）",
+    title: "从 iconfont 选择图标",
     cls: "plg-iconfont-overlay",
     wide: true,
     stack: true,
+    tier: 2,
     build: (body, close) => {
       addClasses(body, "plg-modal", "plg-iconfont-modal");
       body.createDiv({
         cls: "plg-muted plg-iconfont-hint",
-        text: "公开包已关闭在线图标库；请关闭本窗后改用「上传」或 emoji",
+        text: "数据来自 iconfont.cn，仅供个人学习使用；选中后自动压缩为统一尺寸",
       });
 
       const searchRow = body.createDiv({ cls: "plg-iconfont-search" });
@@ -233,7 +254,7 @@ function attachIconfontPickerButton(tools, app, onSelected, draftName = "") {
   const btn = tools.createEl("button", {
     text: "iconfont",
     cls: "plg-btn-plain",
-    attr: { type: "button", title: "在线图标搜索已关闭，请用上传或 emoji" },
+    attr: { type: "button", title: "从 iconfont.cn 搜索选择" },
   });
   btn.onclick = () => {
     openIconfontPicker((picked) => onSelected(picked), {
