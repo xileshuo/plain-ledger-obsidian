@@ -31,19 +31,19 @@
 .is-mobile .workspace-leaf-content[data-type="plain-ledger-dashboard"] .view-header,
 body.is-phone .workspace-leaf-content[data-type="plain-ledger-dashboard"] .view-header,
 body.is-mobile .workspace-leaf-content[data-type="plain-ledger-dashboard"] .view-header {
-  display: none !important;
-  height: 0 !important;
-  min-height: 0 !important;
-  max-height: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  overflow: hidden !important;
-  border: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-  position: absolute !important;
-  left: -9999px !important;
+  display: none;
+  height: 0;
+  min-height: 0;
+  max-height: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  border: none;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  position: absolute;
+  left: -9999px;
 }
 
 .plg-ledger-root {
@@ -2991,8 +2991,8 @@ input.plg-budget-title-input.plg-budget-val-inline {
 /* 挂在设置 .modal / modal-container 内时仍铺满视口，并压过一级面板 */
 .modal > .plg-overlay,
 .modal-container > .plg-overlay {
-  position: fixed !important;
-  inset: 0 !important;
+  position: fixed;
+  inset: 0;
   pointer-events: auto;
 }
 
@@ -4287,9 +4287,9 @@ body.plg-capture-kb-open .plg-overlay-mobile-fit .plg-overlay-panel.plg-capture-
   margin-bottom: 0;
   padding: 2px;
   border-radius: 999px;
-  height: 32px !important;
-  min-height: 32px !important;
-  max-height: 32px !important;
+  height: 32px;
+  min-height: 32px;
+  max-height: 32px;
   gap: 2px;
   box-sizing: border-box;
   align-items: center;
@@ -4297,10 +4297,10 @@ body.plg-capture-kb-open .plg-overlay-mobile-fit .plg-overlay-panel.plg-capture-
 .plg-cat-toolbar .plg-cat-flow-toggle button {
   flex: 0 0 auto;
   min-width: 56px;
-  height: 28px !important;
-  min-height: 28px !important;
-  max-height: 28px !important;
-  padding: 0 12px !important;
+  height: 28px;
+  min-height: 28px;
+  max-height: 28px;
+  padding: 0 12px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
@@ -4312,18 +4312,18 @@ body.plg-capture-kb-open .plg-overlay-mobile-fit .plg-overlay-panel.plg-capture-
 }
 .plg-cat-toolbar > .plg-btn-primary {
   flex: 0 0 auto;
-  height: 32px !important;
-  min-height: 32px !important;
-  max-height: 32px !important;
-  padding: 0 14px !important;
-  border-radius: 999px !important;
-  font-size: 12px !important;
+  height: 32px;
+  min-height: 32px;
+  max-height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 12px;
   font-weight: 700;
-  line-height: 32px !important;
-  box-sizing: border-box !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  line-height: 32px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .plg-cat-block {
@@ -13263,12 +13263,12 @@ body.plg-capture-kb-open .plg-overlay-mobile-fit .plg-smart-panel .plg-capture-t
 .plg-settings-intro,
 .jnr-settings-intro,
 .bc-settings-intro {
-  margin: 0 0 6px !important;
-  padding: 0 0 0 12px !important;
+  margin: 0 0 6px;
+  padding: 0 0 0 12px;
   border-left: 2px solid var(--lifeos-accent, #b48246);
-  text-indent: 4em !important;
-  line-height: 1.35 !important;
-  font-size: 12px !important;
+  text-indent: 4em;
+  line-height: 1.35;
+  font-size: 12px;
 }
 .lifeos-act-btn,
 .lifeos-act-btn-primary,
@@ -14755,68 +14755,6 @@ body.plg-capture-kb-open .plg-overlay-mobile-fit .plg-smart-panel .plg-capture-t
   top: var(--plg-tip-top, 0);
 }
 
-
-
-/* ─── 无痕滚动：隐藏滚动条（保留滚动能力）─── */
-.plg-body,
-.plg-page-scroll,
-.plg-overlay-body,
-.plg-summary-table-body.is-scrollable,
-.plg-cat-grid-mobile-grid,
-.plg-cat-grid-mobile-strip,
-.plg-overlay-mobile-fit .plg-manual-recent-chips-mobile,
-.plg-overlay-mobile-fit .plg-manual-panel .plg-cat-grid-mobile-grid,
-.plg-overlay-panel.plg-tx-history-overlay .plg-sub-history-list,
-.plg-overlay-panel.plg-capture-overlay:not(.plg-overlay-panel-mobile-fit) .plg-manual-panel .plg-cat-grid-desktop-2row,
-.plg-overlay-panel.plg-capture-overlay:not(.plg-overlay-panel-mobile-fit) .plg-manual-panel .plg-cat-grid-manual,
-.plg-settings-host,
-.plg-settings-host.vertical-tab-content,
-.vertical-tab-content.plg-settings-host,
-.vertical-tab-content-container:has(.plg-settings-host),
-.modal.mod-settings .vertical-tab-content:has(.plg-settings-tab-bar),
-.modal.mod-settings .vertical-tab-content-container:has(.plg-settings-tab-bar),
-.plg-settings-panels,
-.plg-settings-panel,
-.plg-settings-cat-list,
-.plg-nav-appearance-card,
-.plg-settings-block-body,
-.plg-settings-section-body,
-.modal.plg-obsidian-modal-host .modal-content,
-.modal.plg-obsidian-modal-host .plg-overlay-body {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.plg-body::-webkit-scrollbar,
-.plg-page-scroll::-webkit-scrollbar,
-.plg-overlay-body::-webkit-scrollbar,
-.plg-summary-table-body.is-scrollable::-webkit-scrollbar,
-.plg-cat-grid-mobile-grid::-webkit-scrollbar,
-.plg-cat-grid-mobile-strip::-webkit-scrollbar,
-.plg-overlay-mobile-fit .plg-manual-recent-chips-mobile::-webkit-scrollbar,
-.plg-overlay-mobile-fit .plg-manual-panel .plg-cat-grid-mobile-grid::-webkit-scrollbar,
-.plg-overlay-panel.plg-tx-history-overlay .plg-sub-history-list::-webkit-scrollbar,
-.plg-overlay-panel.plg-capture-overlay:not(.plg-overlay-panel-mobile-fit) .plg-manual-panel .plg-cat-grid-desktop-2row::-webkit-scrollbar,
-.plg-overlay-panel.plg-capture-overlay:not(.plg-overlay-panel-mobile-fit) .plg-manual-panel .plg-cat-grid-manual::-webkit-scrollbar,
-.plg-settings-host::-webkit-scrollbar,
-.plg-settings-host.vertical-tab-content::-webkit-scrollbar,
-.vertical-tab-content.plg-settings-host::-webkit-scrollbar,
-.vertical-tab-content-container:has(.plg-settings-host)::-webkit-scrollbar,
-.modal.mod-settings .vertical-tab-content:has(.plg-settings-tab-bar)::-webkit-scrollbar,
-.modal.mod-settings .vertical-tab-content-container:has(.plg-settings-tab-bar)::-webkit-scrollbar,
-.plg-settings-panels::-webkit-scrollbar,
-.plg-settings-panel::-webkit-scrollbar,
-.plg-settings-cat-list::-webkit-scrollbar,
-.plg-nav-appearance-card::-webkit-scrollbar,
-.plg-settings-block-body::-webkit-scrollbar,
-.plg-settings-section-body::-webkit-scrollbar,
-.modal.plg-obsidian-modal-host .modal-content::-webkit-scrollbar,
-.modal.plg-obsidian-modal-host .plg-overlay-body::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-}
-
 /* 记一笔面板内卡片无痕：去掉多余边框/阴影，避免 Tab 内容「分块」感 */
 .plg-overlay-panel.plg-capture-overlay .plg-capture-card.plg-glass-panel {
   background: transparent;
@@ -14830,32 +14768,32 @@ body.plg-capture-kb-open .plg-overlay-mobile-fit .plg-smart-panel .plg-capture-t
 .is-phone .plg-settings-compact .setting-item:not(.setting-item-heading),
 .is-mobile .plg-settings-compact .setting-item:not(.setting-item-heading),
 .plg-settings-mobile .setting-item:not(.setting-item-heading) {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 12px !important;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 .is-phone .plg-settings-compact .setting-item:not(.setting-item-heading) .setting-item-info,
 .is-mobile .plg-settings-compact .setting-item:not(.setting-item-heading) .setting-item-info,
 .plg-settings-mobile .setting-item:not(.setting-item-heading) .setting-item-info {
-  flex: 0 1 auto !important;
-  width: auto !important;
-  min-width: 4.5em !important;
-  max-width: 42% !important;
-  align-self: center !important;
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 4.5em;
+  max-width: 42%;
+  align-self: center;
 }
 .is-phone .plg-settings-compact .setting-item:not(.setting-item-heading) .setting-item-control,
 .is-mobile .plg-settings-compact .setting-item:not(.setting-item-heading) .setting-item-control,
 .plg-settings-mobile .setting-item:not(.setting-item-heading) .setting-item-control {
-  flex: 1 1 auto !important;
-  width: auto !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  margin-left: auto !important;
-  justify-content: flex-end !important;
-  align-self: center !important;
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  margin-left: auto;
+  justify-content: flex-end;
+  align-self: center;
 }
 .is-phone .plg-settings-compact .setting-item:not(.setting-item-heading) .setting-item-control input[type="text"],
 .is-phone .plg-settings-compact .setting-item:not(.setting-item-heading) .setting-item-control input[type="number"],
@@ -14863,165 +14801,165 @@ body.plg-capture-kb-open .plg-overlay-mobile-fit .plg-smart-panel .plg-capture-t
 .is-mobile .plg-settings-compact .setting-item:not(.setting-item-heading) .setting-item-control input[type="number"],
 .plg-settings-mobile .setting-item:not(.setting-item-heading) .setting-item-control input[type="text"],
 .plg-settings-mobile .setting-item:not(.setting-item-heading) .setting-item-control input[type="number"] {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* 折叠区块标题：全宽，禁止 76px 截断「全局关键词」等 */
 .plg-settings-compact .plg-settings-block-collapsible .plg-settings-block-head > .setting-item.setting-item-heading,
 .is-phone .plg-settings-compact .plg-settings-block-collapsible .plg-settings-block-head > .setting-item.setting-item-heading,
 .is-mobile .plg-settings-compact .plg-settings-block-collapsible .plg-settings-block-head > .setting-item.setting-item-heading {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: stretch !important;
-  gap: 4px !important;
-  width: 100% !important;
-  padding: 0 !important;
-  border-bottom: none !important;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  width: 100%;
+  padding: 0;
+  border-bottom: none;
 }
 .plg-settings-compact .plg-settings-block-collapsible .plg-settings-block-head > .setting-item.setting-item-heading .setting-item-info,
 .is-phone .plg-settings-compact .plg-settings-block-collapsible .plg-settings-block-head > .setting-item.setting-item-heading .setting-item-info,
 .is-mobile .plg-settings-compact .plg-settings-block-collapsible .plg-settings-block-head > .setting-item.setting-item-heading .setting-item-info {
-  flex: 1 1 auto !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  padding-right: 0 !important;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  padding-right: 0;
 }
 .plg-settings-compact .plg-settings-block-collapsible .plg-settings-block-head > .setting-item.setting-item-heading .setting-item-name,
 .plg-settings-compact .plg-settings-block-collapsible .plg-settings-block-head > .setting-item.setting-item-heading .setting-item-description {
-  white-space: normal !important;
-  overflow: visible !important;
-  text-overflow: unset !important;
-  width: 100% !important;
-  max-width: none !important;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  width: 100%;
+  max-width: none;
 }
 .plg-settings-compact .plg-settings-block-collapsible .plg-settings-block-head > .setting-item.setting-item-heading .setting-item-description {
-  display: block !important;
-  margin: 4px 0 0 !important;
-  font-size: 12px !important;
-  line-height: 1.5 !important;
-  color: var(--text-muted) !important;
+  display: block;
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
 }
 .plg-settings-compact .plg-settings-block-collapsible .plg-settings-block-head > .setting-item.setting-item-heading .setting-item-control {
-  display: none !important;
+  display: none;
 }
 
 /* 手机 Tab：保持每行 4 个（8→2×4） */
 .plg-settings-mobile .plg-settings-tab-bar,
 .plg-settings-mobile .plg-settings-tab-bar.is-many-tabs {
-  flex-wrap: wrap !important;
+  flex-wrap: wrap;
 }
 .plg-settings-mobile .plg-settings-tab-bar button,
 .plg-settings-mobile .plg-settings-tab-bar.is-many-tabs button {
-  flex: 1 1 calc(25% - 6px) !important;
-  min-width: 0 !important;
+  flex: 1 1 calc(25% - 6px);
+  min-width: 0;
   max-width: calc(25% - 4.5px);
-  box-sizing: border-box !important;
+  box-sizing: border-box;
 }
 .plg-settings-mobile .plg-settings-intro,
 .plg-settings-compact .plg-settings-intro {
-  margin: 0 0 6px !important;
-  padding: 0 !important;
-  text-indent: 4em !important;
-  line-height: 1.35 !important;
-  font-size: 12px !important;
+  margin: 0 0 6px;
+  padding: 0;
+  text-indent: 4em;
+  line-height: 1.35;
+  font-size: 12px;
 }
 .plg-settings-mobile .plg-mobile-top-spacer {
-  height: 0 !important;
-  min-height: 0 !important;
-  margin: 0 !important;
-  display: none !important;
+  height: 0;
+  min-height: 0;
+  margin: 0;
+  display: none;
 }
 
 /* 操作行：标签左、按钮右贴齐同尺寸（压过手机端 control 拉满） */
 .is-phone .plg-settings-compact .plg-settings-action-row .setting-item-info,
 .is-mobile .plg-settings-compact .plg-settings-action-row .setting-item-info,
 .plg-settings-mobile .plg-settings-action-row .setting-item-info {
-  flex: 1 1 auto !important;
-  max-width: none !important;
-  min-width: 0 !important;
-  margin-right: 12px !important;
+  flex: 1 1 auto;
+  max-width: none;
+  min-width: 0;
+  margin-right: 12px;
 }
 .is-phone .plg-settings-compact .plg-settings-action-row .setting-item-control,
 .is-mobile .plg-settings-compact .plg-settings-action-row .setting-item-control,
 .plg-settings-mobile .plg-settings-action-row .setting-item-control {
-  flex: 0 0 auto !important;
-  width: auto !important;
-  margin-left: 0 !important;
+  flex: 0 0 auto;
+  width: auto;
+  margin-left: 0;
 }
 .is-phone .plg-settings-compact .plg-settings-action-row .setting-item-control button,
 .is-mobile .plg-settings-compact .plg-settings-action-row .setting-item-control button,
 .plg-settings-mobile .plg-settings-action-row .setting-item-control button {
-  min-width: 64px !important;
-  width: auto !important;
-  max-width: 88px !important;
-  min-height: 28px !important;
-  height: 28px !important;
-  padding: 0 14px !important;
-  flex: 0 0 auto !important;
-  box-sizing: border-box !important;
+  min-width: 64px;
+  width: auto;
+  max-width: 88px;
+  min-height: 28px;
+  height: 28px;
+  padding: 0 14px;
+  flex: 0 0 auto;
+  box-sizing: border-box;
 }
 
 
 /* lifeos-act-input height sync apple */
 .lifeos-act-row {
-  align-items: center !important;
+  align-items: center;
 }
 .lifeos-act-input,
 .lifeos-act-btn {
-  height: 36px !important;
-  min-height: 36px !important;
-  max-height: 36px !important;
-  line-height: 36px !important;
-  box-sizing: border-box !important;
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  line-height: 36px;
+  box-sizing: border-box;
 }
 .lifeos-act-input {
-  padding: 0 10px !important;
-  text-align: center !important;
+  padding: 0 10px;
+  text-align: center;
 }
 .lifeos-about-work-actions {
-  justify-content: flex-end !important;
+  justify-content: flex-end;
 }
 .lifeos-about-work-actions button,
 .lifeos-about-link-row button {
-  min-width: 64px !important;
-  height: 36px !important;
-  min-height: 36px !important;
-  line-height: 36px !important;
-  padding: 0 14px !important;
+  min-width: 64px;
+  height: 36px;
+  min-height: 36px;
+  line-height: 36px;
+  padding: 0 14px;
 }
 .lifeos-about-work-philosophy {
-  text-indent: 4em !important;
-  line-height: 1.35 !important;
-  margin-top: 2px !important;
+  text-indent: 4em;
+  line-height: 1.35;
+  margin-top: 2px;
 }
 .is-phone .plg-settings-compact .plg-settings-action-row .setting-item-control button,
 .is-mobile .plg-settings-compact .plg-settings-action-row .setting-item-control button,
 .plg-settings-mobile .plg-settings-action-row .setting-item-control button {
-  min-width: 64px !important;
-  height: 36px !important;
-  min-height: 36px !important;
-  line-height: 36px !important;
-  padding: 0 14px !important;
-  max-width: 88px !important;
-  width: auto !important;
+  min-width: 64px;
+  height: 36px;
+  min-height: 36px;
+  line-height: 36px;
+  padding: 0 14px;
+  max-width: 88px;
+  width: auto;
 }
 
 /* 数据页：左说明+路径 / 右「打开」（对齐纪念日） */
 .plg-settings-compact .plg-settings-data-file-row,
 .plg-settings-mobile .plg-settings-data-file-row {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 12px !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-  padding: 9px 0 !important;
-  margin: 0 !important;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 0;
+  margin: 0;
   border-bottom: 1px solid var(--background-modifier-border);
 }
 .plg-settings-compact .plg-settings-data-file-row:last-child,
@@ -15030,36 +14968,36 @@ body.plg-capture-kb-open .plg-overlay-mobile-fit .plg-smart-panel .plg-capture-t
 }
 .plg-settings-compact .plg-settings-data-file-text,
 .plg-settings-mobile .plg-settings-data-file-text {
-  flex: 1 1 auto !important;
-  min-width: 0 !important;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 .plg-settings-compact .plg-settings-data-file-label,
 .plg-settings-mobile .plg-settings-data-file-label {
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  line-height: 1.4 !important;
-  color: var(--text-normal) !important;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-normal);
 }
 .plg-settings-compact .plg-settings-data-file-path,
 .plg-settings-mobile .plg-settings-data-file-path {
-  margin-top: 2px !important;
-  font-family: SFMono-Regular, Menlo, monospace !important;
-  font-size: 11px !important;
-  line-height: 1.35 !important;
-  color: var(--text-muted) !important;
-  word-break: break-all !important;
+  margin-top: 2px;
+  font-family: SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-muted);
+  word-break: break-all;
 }
 .plg-settings-compact .plg-settings-data-file-row > button,
 .plg-settings-mobile .plg-settings-data-file-row > button {
-  flex: 0 0 auto !important;
-  align-self: center !important;
-  min-width: 64px !important;
-  height: 28px !important;
-  min-height: 28px !important;
-  padding: 0 14px !important;
-  border-radius: 8px !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  line-height: 28px !important;
-  box-sizing: border-box !important;
+  flex: 0 0 auto;
+  align-self: center;
+  min-width: 64px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 28px;
+  box-sizing: border-box;
 }

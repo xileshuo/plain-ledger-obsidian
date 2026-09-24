@@ -10,6 +10,10 @@ const PLUGIN_PHILOSOPHY_SUBTITLE =
 
 /** 按版本维护；弹窗默认展开最新版，历史版本点击展开 */
 const PLUGIN_CHANGELOG = {
+  "4.0.26": [
+    "审核：去掉 iconfont / favicon / OCR CDN 外网请求与设置页 inline !important（Scorecard）",
+    "审核：manifest 英文 description；CSS 去掉 !important",
+  ],
   "4.0.25": [
     "体验：首启 / 套装提示可点「去了解」打开套装说明，不再误关卡片",
     "设置：数据文件行不再被 Setting 控件挡字；锁定提示与中文 Notice 对齐",

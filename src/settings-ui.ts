@@ -2745,14 +2745,7 @@ function renderPluginSettings(container, plugin, onRefresh, focusOpts = null) {
       ? PLUGIN_PHILOSOPHY_SUBTITLE
       : "记账不必离开笔记——PlainLedger 把账单保存在 Obsidian 库内，随 iCloud / Git 同步。",
   });
-  const plgIntro = container.querySelector(".plg-settings-intro");
-  if (plgIntro) {
-    plgIntro.style.setProperty("margin", "0 0 6px", "important");
-    plgIntro.style.setProperty("padding", "0", "important");
-    plgIntro.style.setProperty("text-indent", "4em", "important");
-    plgIntro.style.setProperty("line-height", "1.35", "important");
-    plgIntro.style.setProperty("font-size", "12px", "important");
-  }
+  // 版式由 styles.css .plg-settings-intro 负责；勿 inline !important（Scorecard Risk）
 
   const licenseRequired = typeof isLicenseRequired === "function" && isLicenseRequired();
   const locked = licenseRequired && !isPluginLicensed(plugin.app, plugin.settings);

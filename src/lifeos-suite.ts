@@ -517,15 +517,12 @@ function elevateLifeOsUpdateModal(modal) {
     if (!container) return;
     container.addClass("lifeos-update-modal-host");
     applyCssProps(container, { "--lifeos-update-z": z });
-    try { container.style.setProperty("z-index", z, "important"); } catch (_) { container.style.zIndex = z; }
     const bg = container.querySelector(".modal-bg");
     if (bg) {
       bg.addClass("lifeos-update-modal-bg");
       applyCssProps(bg, { "--lifeos-update-z": z });
-      try { bg.style.setProperty("z-index", z, "important"); } catch (_) { bg.style.zIndex = z; }
     }
     applyCssProps(modal.modalEl, { "--lifeos-update-z": z });
-    try { modal.modalEl.style.setProperty("z-index", z, "important"); } catch (_) { modal.modalEl.style.zIndex = z; }
   };
   window.requestAnimationFrame(() => {
     apply();
