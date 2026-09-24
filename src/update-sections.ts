@@ -10,6 +10,9 @@ const PLUGIN_PHILOSOPHY_SUBTITLE =
 
 /** 按版本维护；弹窗默认展开最新版，历史版本点击展开 */
 const PLUGIN_CHANGELOG = {
+  "4.0.28": [
+    "审核：首启卡改回浏览器 localStorage，消除 no-unsupported-api；保留 iconfont/favicon/OCR CDN",
+  ],
   "4.0.27": [
     "恢复：iconfont 在线搜索、订阅 favicon、OCR 语言包 CDN（产品能力保留）",
     "保留：设置页无 inline !important、英文 description、CSS 审核清理",

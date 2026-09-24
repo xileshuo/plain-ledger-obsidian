@@ -278,10 +278,8 @@ function renderLifeOsEmptyState(parent, options = {}) {
 function showLifeOsFirstRunCard(container, app, storageKey, options = {}) {
   injectLifeOsSharedStyles();
   try {
-    const seen = typeof app?.loadLocalStorage === "function"
-      ? app.loadLocalStorage(storageKey)
-      : localStorage.getItem(storageKey);
-    if (seen === "1") return null;
+    // 首启标记用浏览器 localStorage（勿用高于 minApp 的 App 存储 API）
+    if (localStorage.getItem(storageKey) === "1") return null;
   } catch { /* ignore */ }
   const card = container.createDiv({ cls: "lifeos-first-run-card" });
   card.createEl("p", { cls: "lifeos-first-run-title", text: options.title || "欢迎使用 LifeOS" });
@@ -290,8 +288,7 @@ function showLifeOsFirstRunCard(container, app, storageKey, options = {}) {
   const actions = card.createDiv({ cls: "lifeos-first-run-actions" });
   const dismiss = () => {
     try {
-      if (typeof app?.saveLocalStorage === "function") app.saveLocalStorage(storageKey, "1");
-      else localStorage.setItem(storageKey, "1");
+      localStorage.setItem(storageKey, "1");
     } catch { /* ignore */ }
     card.remove();
   };
@@ -1508,6 +1505,9 @@ const PLUGIN_PHILOSOPHY_SUBTITLE =
 
 /** 按版本维护；弹窗默认展开最新版，历史版本点击展开 */
 const PLUGIN_CHANGELOG = {
+  "4.0.28": [
+    "审核：首启卡改回浏览器 localStorage，消除 no-unsupported-api；保留 iconfont/favicon/OCR CDN",
+  ],
   "4.0.27": [
     "恢复：iconfont 在线搜索、订阅 favicon、OCR 语言包 CDN（产品能力保留）",
     "保留：设置页无 inline !important、英文 description、CSS 审核清理",
@@ -12944,7 +12944,7 @@ function renderPlgNavAppearancePanel(panel, plugin, focusOpts) {
 
 // ─── Plugin bootstrap (obsidian import in src/00-obsidian.ts) ────────────────
 
-const PLUGIN_VERSION = "4.0.27";
+const PLUGIN_VERSION = "4.0.28";
 const VIEW_TYPE = "plain-ledger-dashboard";
 const ICON_NAME = "wallet";
 

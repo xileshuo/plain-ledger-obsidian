@@ -1,7 +1,7 @@
 {
   "id": "plain-ledger",
   "name": "PlainLedger",
-  "version": "4.0.27",
+  "version": "4.0.28",
   "minAppVersion": "1.7.2",
   "description": "Standalone ledger for vault-local bills, budgets, subscriptions, and reports.",
   "author": "囍樂",
