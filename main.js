@@ -300,6 +300,17 @@ function showLifeOsFirstRunCard(container, app, storageKey, options = {}) {
       if (typeof options.onPrimary === "function") void options.onPrimary();
     };
   }
+  if (options.secondaryLabel) {
+    const secondary = actions.createEl("button", {
+      cls: "lifeos-first-run-secondary",
+      text: options.secondaryLabel,
+      type: "button",
+    });
+    secondary.onclick = () => {
+      dismiss();
+      if (typeof options.onSecondary === "function") void options.onSecondary();
+    };
+  }
   const later = actions.createEl("button", { text: options.laterLabel || "知道了", type: "button" });
   later.onclick = dismiss;
   return card;
@@ -340,25 +351,8 @@ function openLifeOsPluginSettings(app, pluginId) {
   }, 80);
 }
 
-function renderLifeOsFamilyFoot(container, app, selfId) {
-  injectLifeOsSharedStyles();
-  const foot = container.createDiv({ cls: "lifeos-family-foot" });
-  foot.createSpan({ text: "LifeOS 插件族 · " });
-  const catalog = typeof LIFEOS_PLUGIN_CATALOG !== "undefined" ? LIFEOS_PLUGIN_CATALOG : [];
-  const peers = catalog.filter((p) => p.id !== selfId);
-  peers.forEach((item, idx) => {
-    if (idx > 0) foot.createSpan({ text: " · " });
-    const link = foot.createEl("a", { text: item.name, href: "#", cls: "lifeos-family-foot-link" });
-    link.onclick = (e) => {
-      e.preventDefault();
-      const plugin = app?.plugins?.plugins?.[item.id];
-      if (!plugin) {
-        new Notice(`未检测到 ${item.name}，请先在设置中启用对应插件`);
-        return;
-      }
-      openLifeOsPluginSettings(app, item.id);
-    };
-  });
+function renderLifeOsFamilyFoot(_container, _app, _selfId) {
+  /* 已迁移至「关于 → 所有作品」，保留空实现避免旧调用报错 */
 }
 
 function formatTrialRemaining(ms) {
@@ -617,8 +611,29 @@ function maybeShowLifeOsSuitePrompt(app, selfId, selfName) {
   } catch { /* ignore */ }
   const peerText = peers.join("、");
   window.setTimeout(() => {
-    new Notice(`${selfName} 可与 ${peerText} 并排使用，数据均保存在同一 Obsidian 库内。`, 8000);
-    try { localStorage.setItem(storageKey, "1"); } catch { /* ignore */ }
+    try {
+      if (localStorage.getItem(storageKey) === "1") return;
+    } catch { /* ignore */ }
+    const markSeen = () => {
+      try { localStorage.setItem(storageKey, "1"); } catch { /* ignore */ }
+    };
+    try {
+      const modal = new Modal(app);
+      modal.setTitle("LifeOS 套装");
+      modal.contentEl.createEl("p", {
+        text: `${selfName} 可与 ${peerText} 并排使用，数据均保存在同一 Obsidian 库内。`,
+      });
+      const row = modal.contentEl.createDiv({ cls: "modal-button-container" });
+      const btn = row.createEl("button", { text: "知道了", cls: "mod-cta", type: "button" });
+      btn.onclick = () => {
+        markSeen();
+        modal.close();
+      };
+      modal.open();
+    } catch (_) {
+      new Notice(`${selfName} 可与 ${peerText} 并排使用，数据均保存在同一 Obsidian 库内。`, 8000);
+      markSeen();
+    }
   }, 2200);
 }
 
@@ -628,6 +643,7 @@ function openLifeOsExternalUrl(url) {
     window.open(url, "_blank");
   } catch (err) {
     console.warn("[LifeOS] open external url", err);
+    try { new Notice("无法打开链接"); } catch { /* ignore */ }
   }
 }
 
@@ -644,7 +660,7 @@ function renderLifeOsActivationPanel(container, config) {
   const wrap = container.createDiv({ cls: "lifeos-act-wrap" });
   const card = wrap.createDiv({ cls: "lifeos-act-card" });
 
-  card.createDiv({ cls: "lifeos-act-title", text: config.pluginName || "LifeOS" });
+  card.createEl("h2", { cls: "lifeos-act-title", text: config.pluginName || "LifeOS" });
 
   const statusText = typeof config.getStatusText === "function" ? config.getStatusText() : "";
   if (statusText) {
@@ -695,7 +711,7 @@ function renderLifeOsActivationPanel(container, config) {
   if (config.licenseKey) keyInput.value = config.licenseKey;
   const activateBtn = keyRow.createEl("button", {
     cls: "lifeos-act-btn lifeos-act-btn-primary",
-    text: config.activateShortLabel || "验证并激活",
+    text: config.activateShortLabel || "激活",
     type: "button",
   });
 
@@ -829,7 +845,7 @@ function renderPlainLedgerShortcutsSettingsPanel(panel, plugin) {
   const helpRows = block.createDiv();
   const guideRow = helpRows.createDiv({ cls: "lifeos-about-link-row" });
   guideRow.createSpan({ text: "快捷指令使用说明" });
-  const guideBtn = guideRow.createEl("button", { text: "打开", type: "button" });
+  const guideBtn = guideRow.createEl("button", { cls: "lifeos-act-btn", text: "打开", type: "button" });
   guideBtn.onclick = () => void openPlainLedgerShortcutsGuide(plugin);
 
   const copyShortcutUrl = async (url) => {
@@ -964,7 +980,7 @@ function renderLifeOsLicenseSettingsPanel(panel, config) {
   keyInput.addEventListener("input", () => { keyValue = keyInput.value.trim(); });
   const activateBtn = keyRow.createEl("button", {
     cls: "lifeos-act-btn lifeos-act-btn-primary",
-    text: "验证并激活",
+    text: "激活",
     type: "button",
   });
   activateBtn.onclick = () => void config.onActivate?.(keyValue.trim());
@@ -1442,7 +1458,7 @@ function renderActivationPanel(container, plugin) {
     onTrialStart: () => startTrialFromActivationPanel(plugin),
     getFingerprint: () => getVaultFingerprint(plugin.app),
     licenseKey: plugin.settings.licenseKey,
-    activateShortLabel: "验证并激活",
+    activateShortLabel: "激活",
     onCopyFingerprint: async (fp) => {
       const ok = await copyTextToClipboard(fp);
       new Notice(ok ? "设备指纹已复制" : "请手动全选复制指纹");
@@ -1489,6 +1505,11 @@ const PLUGIN_PHILOSOPHY_SUBTITLE =
 
 /** 按版本维护；弹窗默认展开最新版，历史版本点击展开 */
 const PLUGIN_CHANGELOG = {
+  "4.0.25": [
+    "体验：首启 / 套装提示可点「去了解」打开套装说明，不再误关卡片",
+    "设置：数据文件行不再被 Setting 控件挡字；锁定提示与中文 Notice 对齐",
+    "外观：手机底栏 inset 滞回更稳；设置页顶距与 LifeOS 一致",
+  ],
   "4.0.24": [
     "外观：设置内二级弹层标题左右内边距，避免贴边",
   ],
@@ -10618,22 +10639,17 @@ function renderPlgDataPanel(panel, plugin, onRefresh) {
     (body) => {
       const ledgerPath = plugin.store.filePath();
       const settingsPath = normalizePath(`.obsidian/plugins/${plugin.manifest.id}/data.json`);
-      new Setting(body)
-        .setName("ledger.json")
-        .setClass("plg-settings-action-row")
-        .addButton((b) => b.setButtonText("打开").onClick(() => void openPlgLedgerFile(plugin)));
-      body.createEl("p", {
-        cls: "plg-settings-section-hint",
-        text: `全部账单、分类、订阅与周期规则。\n${ledgerPath}`,
-      });
-      new Setting(body)
-        .setName("data.json")
-        .setClass("plg-settings-action-row")
-        .addButton((b) => b.setButtonText("打开").onClick(() => void openPlgPluginDataFile(plugin)));
-      body.createEl("p", {
-        cls: "plg-settings-section-hint",
-        text: `预算、数据目录、激活状态等插件设置。\n${settingsPath}`,
-      });
+      const addDataFileRow = (label, path, onOpen) => {
+        const row = body.createDiv({ cls: "plg-settings-data-file-row" });
+        const text = row.createDiv({ cls: "plg-settings-data-file-text" });
+        text.createDiv({ cls: "plg-settings-data-file-label", text: label });
+        text.createDiv({ cls: "plg-settings-data-file-path", text: path });
+        row
+          .createEl("button", { text: "打开", cls: "plg-text-btn", attr: { type: "button" } })
+          .addEventListener("click", () => void onOpen());
+      };
+      addDataFileRow("全部账单、分类、订阅与周期规则。", ledgerPath, () => openPlgLedgerFile(plugin));
+      addDataFileRow("预算、数据目录、激活状态等插件设置。", settingsPath, () => openPlgPluginDataFile(plugin));
     },
   );
 
@@ -10708,9 +10724,23 @@ function renderPluginSettings(container, plugin, onRefresh, focusOpts = null) {
       ? PLUGIN_PHILOSOPHY_SUBTITLE
       : "记账不必离开笔记——PlainLedger 把账单保存在 Obsidian 库内，随 iCloud / Git 同步。",
   });
+  const plgIntro = container.querySelector(".plg-settings-intro");
+  if (plgIntro) {
+    plgIntro.style.setProperty("margin", "0 0 6px", "important");
+    plgIntro.style.setProperty("padding", "0", "important");
+    plgIntro.style.setProperty("text-indent", "4em", "important");
+    plgIntro.style.setProperty("line-height", "1.35", "important");
+    plgIntro.style.setProperty("font-size", "12px", "important");
+  }
 
   const licenseRequired = typeof isLicenseRequired === "function" && isLicenseRequired();
   const locked = licenseRequired && !isPluginLicensed(plugin.app, plugin.settings);
+  if (locked) {
+    container.createEl("p", {
+      cls: "plg-settings-locked-hint",
+      text: "未激活时仅可查看数据、快捷指令与关于；授权后解锁常用 / 外观 / 分类 / 规则。",
+    });
+  }
   const tabDefs = [];
   if (licenseRequired) tabDefs.push({ id: "license", label: "授权" });
   if (!locked) {
@@ -12910,7 +12940,7 @@ function renderPlgNavAppearancePanel(panel, plugin, focusOpts) {
 
 // ─── Plugin bootstrap (obsidian import in src/00-obsidian.ts) ────────────────
 
-const PLUGIN_VERSION = "4.0.24";
+const PLUGIN_VERSION = "4.0.25";
 const VIEW_TYPE = "plain-ledger-dashboard";
 const ICON_NAME = "wallet";
 
@@ -16015,13 +16045,16 @@ class LedgerDashboardView extends ItemView {
       this.root.addClass("plg-mobile");
       this.root.addClass("plg-mobile-tab");
     }
-    applyCssProps(this.root, { ["--plg-top-inset"]: Platform.isMobile ? "10px" : "0px" });
-    applyCssProps(this.root, { ["--plg-bottom-inset"]: Platform.isMobile ? "72px" : "72px" });
+    // 初始值靠近稳态，避免先 72 再跳到实测值造成底栏闪缩
+    applyCssProps(this.root, {
+      ["--plg-top-inset"]: Platform.isMobile ? "56px" : "0px",
+      ["--plg-bottom-inset"]: Platform.isMobile ? "24px" : "24px",
+    });
     this.insetHandler = () => this.syncMobileInsets();
     window.addEventListener("resize", this.insetHandler);
     if (window.visualViewport) {
+      // 只听 resize：scroll 在 iOS 点按 Tab 时也会狂触发，导致底栏闪缩
       window.visualViewport.addEventListener("resize", this.insetHandler);
-      window.visualViewport.addEventListener("scroll", this.insetHandler);
     }
     // 只观察本 leaf 与少量导航条，勿 observe .app-container（侧栏切换会连触发布局抖动）
     this.insetObserver = new ResizeObserver(() => this.syncMobileInsets());
@@ -16034,9 +16067,9 @@ class LedgerDashboardView extends ItemView {
     });
     await this.render();
     if (Platform.isMobile) {
-      [0, 180].forEach((ms) => {
-        window.setTimeout(() => this.syncMobileInsets(), ms);
-      });
+      // 首帧立刻落稳，再轻量补一次（等 Obsidian 导航条几何就绪）
+      this._applyMobileLayout();
+      window.setTimeout(() => this._applyMobileLayout(), 120);
     }
   }
 
@@ -16046,7 +16079,6 @@ class LedgerDashboardView extends ItemView {
       window.removeEventListener("resize", this.insetHandler);
       if (window.visualViewport) {
         window.visualViewport.removeEventListener("resize", this.insetHandler);
-        window.visualViewport.removeEventListener("scroll", this.insetHandler);
       }
     }
     this.insetObserver?.disconnect();
@@ -16066,7 +16098,7 @@ class LedgerDashboardView extends ItemView {
       // 真机才走 safe-area + Obsidian 悬浮导航计算
       if (Platform.isMobile) this._applyMobileLayout();
       else this._applyBottomInset();
-    }, 100);
+    }, 80);
   }
 
   /** 真机专用：按 safe-area 与 Obsidian 悬浮导航算动态 top/bottom inset */
@@ -16078,6 +16110,8 @@ class LedgerDashboardView extends ItemView {
     const leaf = this.containerEl?.closest(".workspace-leaf-content");
     const lr = leaf?.getBoundingClientRect();
     const leafTop = lr?.top ?? 0;
+    const leafBottom = lr?.bottom ?? ih;
+    const gapBelowLeaf = Math.max(0, ih - leafBottom);
     const m = typeof measureMobileVisualViewport === "function"
       ? measureMobileVisualViewport()
       : null;
@@ -16088,66 +16122,78 @@ class LedgerDashboardView extends ItemView {
     this.root.style.removeProperty("max-height");
     this.root.style.removeProperty("margin-top");
 
-    // 顶栏：Obsidian 已下移 leaf 时不再叠加完整 safe-area
+    // 顶栏：view-header 已隐藏，内容贴顶——必须始终让出状态栏，避免账单/日历重影叠入
+    const safeTop = Math.max(safe.top || 0, 47);
     let topInset;
-    if (leafTop >= Math.max(safe.top, 24) - 8) {
+    if (leafTop >= safeTop - 4) {
+      // Obsidian 已把 leaf 顶到状态栏下方：只需少量内边距
       topInset = 10;
-    } else if (leafTop > 10) {
-      topInset = Math.max(8, Math.round(safe.top - leafTop + 12));
+    } else if (leafTop > 8) {
+      topInset = Math.max(10, Math.round(safeTop - leafTop + 10));
     } else {
-      topInset = Math.max(14, Math.round(safe.top + 12));
+      // leaf 贴屏幕顶（常见于隐藏 view-header）：完整让出状态栏
+      topInset = Math.max(18, Math.round(safeTop + 10));
     }
-    topInset = Math.min(52, topInset);
-    // 搜索收起英雄区后：若 leaf 贴顶，必须让出状态栏（safe-area 偶发为 0 时用 47）
+    topInset = Math.min(64, Math.max(10, topInset));
+    // 搜索收起英雄区后：若 leaf 贴顶，必须让出状态栏
     if (this.root.hasClass("plg-search-focus-root")) {
-      const statusFloor = Math.max(safe.top || 0, 44);
       if (leafTop < 24) {
-        topInset = Math.max(topInset, Math.round(statusFloor + 8));
+        topInset = Math.max(topInset, Math.round(safeTop + 8));
       } else {
         topInset = Math.max(topInset, 14);
       }
     }
 
-    // 底栏：Obsidian 悬浮导航 + home indicator；搜索时也保留底栏
-    // （4.0.2 曾误改为 safe+8，导致 Tab 与 Obsidian 底栏叠在一起）
-    let bottomInset = Math.max(64, Math.round(safe.bottom + 56));
-    if (m && !m.keyboardOpen && m.kbGap > 16) {
-      bottomInset = Math.max(bottomInset, Math.ceil(m.kbGap + safe.bottom + 10));
-    }
-    // 键盘弹起：抬高底 inset 给键盘，但预留底栏高度，绝不隐藏 Tab
-    if (m?.keyboardOpen && m.kbGap > 48) {
-      const leafBottom = lr?.bottom ?? ih;
-      const gapBelowLeaf = Math.max(0, ih - leafBottom);
-      bottomInset = Math.max(56, Math.ceil(m.kbGap - gapBelowLeaf + 8));
-      bottomInset = Math.min(bottomInset, Math.round(ih * 0.5));
-    }
-    // 保证 body+Tab 仍有可见高度（避免键盘 inset 过大把底栏顶出视口）
-    {
-      const tabReserve = 72;
-      const bodyMin = 96;
-      const maxBot = Math.max(56, Math.round(ih - topInset - tabReserve - bodyMin));
-      bottomInset = Math.min(bottomInset, maxBot);
-    }
-
+    // ── 底栏：按 leaf 与导航重叠实测，避免 safe+56 / 虚高 kbGap 造成下沉再闪缩 ──
+    const safeBot = Math.max(0, Math.round(safe.bottom || 0));
+    let navClear = 0;
     document.querySelectorAll(
-      ".status-bar, .mobile-toolbar, .navbar-action-bar, .mobile-navbar, .mobile-nav"
+      ".mobile-toolbar, .navbar-action-bar, .mobile-navbar, .mobile-nav"
     ).forEach((el) => {
       const r = el.getBoundingClientRect();
       if (r.height < 4 || r.width < 36) return;
-      if (r.bottom >= ih - 2 && r.top > ih * 0.35) {
-        bottomInset = Math.max(bottomInset, Math.ceil(ih - r.top + 12));
+      if (r.top < ih * 0.45) return; // 只要底栏 chrome
+      // 与 leaf 底边重叠时，清出重叠量
+      if (r.top < leafBottom - 2 && r.bottom > leafBottom - 140) {
+        navClear = Math.max(navClear, Math.ceil(leafBottom - r.top + 6));
       }
     });
 
-    const tabbar = this.root.querySelector(".plg-tabbar");
-    if (tabbar) {
-      const tr = tabbar.getBoundingClientRect();
-      if (tr.bottom > ih - 4) {
-        bottomInset = Math.max(bottomInset, Math.ceil(tr.bottom - ih + 14));
-      }
+    let bottomInset;
+    if (gapBelowLeaf >= 48) {
+      // Obsidian 已把 leaf 收在底栏之上：只需少量呼吸间距，勿再叠 safe+56
+      bottomInset = safeBot > 0 ? 12 : 14;
+    } else if (navClear > 0) {
+      bottomInset = Math.max(safeBot + 8, navClear);
+    } else {
+      // leaf 贴底：只让出 Home Indicator + 少量内边距
+      bottomInset = Math.max(16, safeBot + 10);
     }
 
-    bottomInset = Math.min(220, Math.max(56, bottomInset));
+    // 键盘弹起才抬高；勿用未开键盘时的 kbGap（开屏时常虚高，导致先下沉再收缩）
+    if (m?.keyboardOpen && m.kbGap > 80) {
+      bottomInset = Math.max(56, Math.ceil(m.kbGap - gapBelowLeaf + 8));
+      bottomInset = Math.min(bottomInset, Math.round(ih * 0.45));
+    }
+
+    // 保证 body+Tab 仍有可见高度
+    {
+      const tabReserve = 72;
+      const bodyMin = 96;
+      const maxBot = Math.max(48, Math.round(ih - topInset - tabReserve - bodyMin));
+      bottomInset = Math.min(bottomInset, maxBot);
+    }
+    bottomInset = Math.min(160, Math.max(10, Math.round(bottomInset)));
+
+    // 滞回：点 Tab / 轻触触发的微小重算不改 CSS，杜绝闪一下
+    const prevBot = parseFloat(this.root.style.getPropertyValue("--plg-bottom-inset")) || 0;
+    if (prevBot > 0 && Math.abs(prevBot - bottomInset) < 5) {
+      bottomInset = prevBot;
+    }
+    const prevTop = parseFloat(this.root.style.getPropertyValue("--plg-top-inset")) || 0;
+    if (prevTop > 0 && Math.abs(prevTop - topInset) < 3) {
+      topInset = prevTop;
+    }
 
     const topStr = `${topInset}px`;
     const botStr = `${bottomInset}px`;

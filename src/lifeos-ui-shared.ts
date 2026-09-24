@@ -76,6 +76,17 @@ function showLifeOsFirstRunCard(container, app, storageKey, options = {}) {
       if (typeof options.onPrimary === "function") void options.onPrimary();
     };
   }
+  if (options.secondaryLabel) {
+    const secondary = actions.createEl("button", {
+      cls: "lifeos-first-run-secondary",
+      text: options.secondaryLabel,
+      type: "button",
+    });
+    secondary.onclick = () => {
+      dismiss();
+      if (typeof options.onSecondary === "function") void options.onSecondary();
+    };
+  }
   const later = actions.createEl("button", { text: options.laterLabel || "知道了", type: "button" });
   later.onclick = dismiss;
   return card;
@@ -116,23 +127,6 @@ function openLifeOsPluginSettings(app, pluginId) {
   }, 80);
 }
 
-function renderLifeOsFamilyFoot(container, app, selfId) {
-  injectLifeOsSharedStyles();
-  const foot = container.createDiv({ cls: "lifeos-family-foot" });
-  foot.createSpan({ text: "LifeOS 插件族 · " });
-  const catalog = typeof LIFEOS_PLUGIN_CATALOG !== "undefined" ? LIFEOS_PLUGIN_CATALOG : [];
-  const peers = catalog.filter((p) => p.id !== selfId);
-  peers.forEach((item, idx) => {
-    if (idx > 0) foot.createSpan({ text: " · " });
-    const link = foot.createEl("a", { text: item.name, href: "#", cls: "lifeos-family-foot-link" });
-    link.onclick = (e) => {
-      e.preventDefault();
-      const plugin = app?.plugins?.plugins?.[item.id];
-      if (!plugin) {
-        new Notice(`未检测到 ${item.name}，请先在设置中启用对应插件`);
-        return;
-      }
-      openLifeOsPluginSettings(app, item.id);
-    };
-  });
+function renderLifeOsFamilyFoot(_container, _app, _selfId) {
+  /* 已迁移至「关于 → 所有作品」，保留空实现避免旧调用报错 */
 }

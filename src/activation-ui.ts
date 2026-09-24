@@ -33,7 +33,7 @@ function renderActivationPanel(container, plugin) {
     onTrialStart: () => startTrialFromActivationPanel(plugin),
     getFingerprint: () => getVaultFingerprint(plugin.app),
     licenseKey: plugin.settings.licenseKey,
-    activateShortLabel: "验证并激活",
+    activateShortLabel: "激活",
     onCopyFingerprint: async (fp) => {
       const ok = await copyTextToClipboard(fp);
       new Notice(ok ? "设备指纹已复制" : "请手动全选复制指纹");

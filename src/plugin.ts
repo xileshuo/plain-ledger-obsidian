@@ -35,7 +35,7 @@ export class PlainLedgerPlugin extends Plugin {
     });
 
     if (isLicenseRequired() && !isPluginAccessAllowed(this.app, this.settings)) {
-      new Notice("PlainLedger: start the 48-hour trial or enter an activation code.");
+      new Notice("请先开启 48 小时试用，或在设置中输入激活码。");
     }
   }
 
@@ -63,7 +63,7 @@ export class PlainLedgerPlugin extends Plugin {
     }
     const leaf = this.app.workspace.getRightLeaf(false);
     if (!leaf) {
-      new Notice("PlainLedger: could not open a workspace leaf.");
+      new Notice("无法打开工作区面板，请重试或重启 Obsidian。");
       return;
     }
     await leaf.setViewState({ type: VIEW_TYPE, active: true });

@@ -2660,22 +2660,17 @@ function renderPlgDataPanel(panel, plugin, onRefresh) {
     (body) => {
       const ledgerPath = plugin.store.filePath();
       const settingsPath = normalizePath(`.obsidian/plugins/${plugin.manifest.id}/data.json`);
-      new Setting(body)
-        .setName("ledger.json")
-        .setClass("plg-settings-action-row")
-        .addButton((b) => b.setButtonText("打开").onClick(() => void openPlgLedgerFile(plugin)));
-      body.createEl("p", {
-        cls: "plg-settings-section-hint",
-        text: `全部账单、分类、订阅与周期规则。\n${ledgerPath}`,
-      });
-      new Setting(body)
-        .setName("data.json")
-        .setClass("plg-settings-action-row")
-        .addButton((b) => b.setButtonText("打开").onClick(() => void openPlgPluginDataFile(plugin)));
-      body.createEl("p", {
-        cls: "plg-settings-section-hint",
-        text: `预算、数据目录、激活状态等插件设置。\n${settingsPath}`,
-      });
+      const addDataFileRow = (label, path, onOpen) => {
+        const row = body.createDiv({ cls: "plg-settings-data-file-row" });
+        const text = row.createDiv({ cls: "plg-settings-data-file-text" });
+        text.createDiv({ cls: "plg-settings-data-file-label", text: label });
+        text.createDiv({ cls: "plg-settings-data-file-path", text: path });
+        row
+          .createEl("button", { text: "打开", cls: "plg-text-btn", attr: { type: "button" } })
+          .addEventListener("click", () => void onOpen());
+      };
+      addDataFileRow("全部账单、分类、订阅与周期规则。", ledgerPath, () => openPlgLedgerFile(plugin));
+      addDataFileRow("预算、数据目录、激活状态等插件设置。", settingsPath, () => openPlgPluginDataFile(plugin));
     },
   );
 
@@ -2750,9 +2745,23 @@ function renderPluginSettings(container, plugin, onRefresh, focusOpts = null) {
       ? PLUGIN_PHILOSOPHY_SUBTITLE
       : "记账不必离开笔记——PlainLedger 把账单保存在 Obsidian 库内，随 iCloud / Git 同步。",
   });
+  const plgIntro = container.querySelector(".plg-settings-intro");
+  if (plgIntro) {
+    plgIntro.style.setProperty("margin", "0 0 6px", "important");
+    plgIntro.style.setProperty("padding", "0", "important");
+    plgIntro.style.setProperty("text-indent", "4em", "important");
+    plgIntro.style.setProperty("line-height", "1.35", "important");
+    plgIntro.style.setProperty("font-size", "12px", "important");
+  }
 
   const licenseRequired = typeof isLicenseRequired === "function" && isLicenseRequired();
   const locked = licenseRequired && !isPluginLicensed(plugin.app, plugin.settings);
+  if (locked) {
+    container.createEl("p", {
+      cls: "plg-settings-locked-hint",
+      text: "未激活时仅可查看数据、快捷指令与关于；授权后解锁常用 / 外观 / 分类 / 规则。",
+    });
+  }
   const tabDefs = [];
   if (licenseRequired) tabDefs.push({ id: "license", label: "授权" });
   if (!locked) {
