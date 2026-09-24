@@ -53,17 +53,9 @@ parts[parts.length - 1] = parts[parts.length - 1].replace(
   /const PLUGIN_VERSION = "[^"]+";/,
   `const PLUGIN_VERSION = "${manifest.version}";`
 );
-function scrubRemoteCdnUrls(code) {
-  // Scorecard 会扫描 bundle 内的 https 主机名；OCR 已内嵌，去掉 tesseract 默认 CDN 字面量
-  return String(code || "")
-    .replace(/https?:\/\/cdn\.jsdelivr\.net\/npm\/[^"'`\s)]+/g, "")
-    .replace(/https?:\/\/gcore\.jsdelivr\.net\/npm\/[^"'`\s)]+/g, "")
-    .replace(/https?:\/\/unpkg\.com\/[^"'`\s)]+/g, "");
-}
-
 const tesseractSrc = path.join(root, "node_modules/tesseract.js/dist/tesseract.min.js");
 const tesseractBundle = fs.existsSync(tesseractSrc)
-  ? scrubRemoteCdnUrls(fs.readFileSync(tesseractSrc, "utf8")) + "\n"
+  ? fs.readFileSync(tesseractSrc, "utf8") + "\n"
   : "";
 const tessBridge = [
   "var __MUMU_TESSERACT__ = (function(){",
@@ -83,7 +75,7 @@ const tessBridge = [
 ].join("\n");
 const workerSrc = path.join(root, "node_modules/tesseract.js/dist/worker.min.js");
 const workerEmbed = fs.existsSync(workerSrc)
-  ? `var __MUMU_TESSERACT_WORKER__ = ${JSON.stringify(scrubRemoteCdnUrls(fs.readFileSync(workerSrc, "utf8")))};\n`
+  ? `var __MUMU_TESSERACT_WORKER__ = ${JSON.stringify(fs.readFileSync(workerSrc, "utf8"))};\n`
   : "var __MUMU_TESSERACT_WORKER__ = \"\";\n";
 fs.writeFileSync(
   path.join(root, "main.js"),

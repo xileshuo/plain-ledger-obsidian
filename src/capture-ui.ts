@@ -2272,9 +2272,13 @@ async function readBundledLangGz(plugin, lang) {
   return null;
 }
 
-function langDownloadUrls(_lang) {
-  // 社区审核：不请求外网 CDN；语言包仅用插件目录 vendor/lang 内置文件
-  return [];
+function langDownloadUrls(lang) {
+  const base = `@tesseract.js-data/${lang}/4.0.0_best_int/${lang}.traineddata.gz`;
+  return [
+    `https://cdn.jsdelivr.net/npm/${base}`,
+    `https://unpkg.com/${base}`,
+    `https://gcore.jsdelivr.net/npm/${base}`,
+  ];
 }
 
 async function fetchLangGz(plugin, url, _timeoutMs = 60000) {
@@ -2311,7 +2315,7 @@ async function ensureOcrLangCached(plugin, onProgress) {
         }
       }
       if (!gz) {
-        throw new Error(`缺少内置语言包（${label}）。请确认插件目录含 vendor/lang/${lang}.traineddata.gz 后重试。`);
+        throw new Error(`语言包下载失败（${label}），请检查网络。${lastErr?.message || ""}`.trim());
       }
     }
 
@@ -2343,14 +2347,16 @@ function formatOcrError(err) {
 }
 
 function buildTesseractOptions(onProgress) {
-  // 社区审核：不引用外网 CDN；worker 用构建内嵌 blob
-  let workerPath = "";
-  let workerBlobURL = false;
+  const ver = "7.0.0";
+  const coreVer = "7.0.0";
+  let workerPath = `https://cdn.jsdelivr.net/npm/tesseract.js@v${ver}/dist/worker.min.js`;
+  let workerBlobURL = true;
   let localBlobUrl = "";
 
   if (typeof __MUMU_TESSERACT_WORKER__ === "string" && __MUMU_TESSERACT_WORKER__) {
     localBlobUrl = URL.createObjectURL(new Blob([__MUMU_TESSERACT_WORKER__], { type: "application/javascript" }));
     workerPath = localBlobUrl;
+    workerBlobURL = false;
   }
 
   return {
@@ -2358,7 +2364,7 @@ function buildTesseractOptions(onProgress) {
     options: {
       workerPath,
       workerBlobURL,
-      corePath: "",
+      corePath: `https://cdn.jsdelivr.net/npm/tesseract.js-core@v${coreVer}`,
       cachePath: OCR_CACHE_PATH,
       cacheMethod: "readwrite",
       logger: (m) => {

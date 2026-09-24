@@ -1073,12 +1073,44 @@ function syncSubscriptionIconWrap(wrap, img, fallbackSrc) {
   else wrap.removeClass("has-img");
 }
 
-async function tryLoadRemoteFavicon(img, _domain, fallbackSrc, wrap) {
-  // 社区审核：不请求 DuckDuckGo / Google favicon
-  if (img && fallbackSrc) {
-    img.src = fallbackSrc;
-    syncSubscriptionIconWrap(wrap, img, fallbackSrc);
+async function tryLoadRemoteFavicon(img, domain, fallbackSrc, wrap) {
+  if (!domain || typeof requestUrl !== "function") return false;
+  const urls = [
+    `https://icons.duckduckgo.com/ip3/${domain}.ico`,
+    `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`,
+  ];
+  for (const url of urls) {
+    try {
+      const res = await requestUrl({ url, method: "GET" });
+      if (res.status >= 200 && res.status < 300 && res.arrayBuffer?.byteLength > 80) {
+        const type = res.headers?.["content-type"] || "image/png";
+        const blob = new Blob([res.arrayBuffer], { type });
+        const objectUrl = URL.createObjectURL(blob);
+        await new Promise((resolve) => {
+          const probe = new Image();
+          probe.onload = () => {
+            if (probe.naturalWidth >= 16 && probe.naturalHeight >= 16) {
+              img.src = objectUrl;
+              syncSubscriptionIconWrap(wrap, img, fallbackSrc);
+            } else {
+              URL.revokeObjectURL(objectUrl);
+              img.src = fallbackSrc;
+              syncSubscriptionIconWrap(wrap, img, fallbackSrc);
+            }
+            resolve();
+          };
+          probe.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            resolve();
+          };
+          probe.src = objectUrl;
+        });
+        if (wrap?.hasClass("has-img")) return true;
+      }
+    } catch (_) { /* try next source */ }
   }
+  img.src = fallbackSrc;
+  syncSubscriptionIconWrap(wrap, img, fallbackSrc);
   return false;
 }
 

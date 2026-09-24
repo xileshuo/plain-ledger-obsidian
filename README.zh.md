@@ -1,7 +1,7 @@
 # PlainLedger
 > **付费 · 48 小时试用 · ¥39.9 永久激活**
 Obsidian 独立记账面板（LifeOS）。账单、分类、订阅规则保存在库内 JSON，随库同步。
-当前公开版本：**4.0.26 · 48 小时试用**
+当前公开版本：**4.0.27 · 48 小时试用**
 ## 定价与购买
 | 项目 | 说明 |
 | --- | --- |
@@ -273,10 +273,15 @@ Obsidian **设置 → 第三方插件 → PlainLedger** 与面板激活页 **高
 
 **Obsidian 是你的知识库，PlainLedger 是你的账本——数据留在库里，记一笔、看统计、管订阅，都在同一个面板完成。**
 ## 更新日志
+### 4.0.27
+
+- 恢复：iconfont 在线搜索、订阅 favicon、OCR 语言包 CDN（产品能力保留）
+- 保留：设置页无 inline !important、英文 description、CSS 审核清理
+
 ### 4.0.26
 
-- 审核：去掉 iconfont / favicon / OCR CDN 外网请求与设置页 inline !important（Scorecard）
-- 审核：manifest 英文 description；CSS 去掉 !important
+- 审核：设置页 inline !important 清理与英文 description（Scorecard）
+- 审核：CSS 去掉 !important / :has
 
 ### 4.0.25
 
@@ -307,12 +312,6 @@ Obsidian **设置 → 第三方插件 → PlainLedger** 与面板激活页 **高
 
 - 修复：手机端账本本年/本月/本周与预算区网格未占满整行导致数字叠在一起
 - 修复：设置内 iconfont 二级面板在部分库/主题下被一级设置窗盖住（z-index 再抬高）
-
-### 4.0.19
-
-- 恢复：iconfont 在线搜索、订阅 favicon（DuckDuckGo / Google）与 OCR CDN 原逻辑
-- 修复：设置内 iconfont 二级面板 z-index，挂到 body 并压过一级设置窗
-- 外观：导航默认图标按 vendor 最初彩色 SVG 对齐
 ---
 ## 分发说明
 本仓库用于社区插件 / BRAT / GitHub Release 分发与产品介绍，并附带 `src/` 等源码便于社区审核。
