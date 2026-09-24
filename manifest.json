@@ -1,9 +1,9 @@
 {
   "id": "plain-ledger",
   "name": "PlainLedger",
-  "version": "4.0.28",
+  "version": "4.0.29",
   "minAppVersion": "1.7.2",
-  "description": "Standalone ledger for vault-local bills, budgets, subscriptions, and reports.",
+  "description": "独立记账面板（LifeOS）：账单、预算、订阅与报表，数据保存在库内并随库同步。",
   "author": "囍樂",
   "authorUrl": "https://github.com/xileshuo",
   "isDesktopOnly": false

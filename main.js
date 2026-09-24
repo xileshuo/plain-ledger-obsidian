@@ -12944,7 +12944,7 @@ function renderPlgNavAppearancePanel(panel, plugin, focusOpts) {
 
 // ─── Plugin bootstrap (obsidian import in src/00-obsidian.ts) ────────────────
 
-const PLUGIN_VERSION = "4.0.28";
+const PLUGIN_VERSION = "4.0.29";
 const VIEW_TYPE = "plain-ledger-dashboard";
 const ICON_NAME = "wallet";
 

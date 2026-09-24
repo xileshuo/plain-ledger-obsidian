@@ -1,7 +1,7 @@
 # PlainLedger
 > **付费 · 48 小时试用 · ¥39.9 永久激活**
 Obsidian 独立记账面板（LifeOS）。账单、分类、订阅规则保存在库内 JSON，随库同步。
-当前公开版本：**4.0.28 · 48 小时试用**
+当前公开版本：**4.0.29 · 48 小时试用**
 ## 定价与购买
 | 项目 | 说明 |
 | --- | --- |
@@ -326,7 +326,7 @@ Obsidian **设置 → 第三方插件 → PlainLedger** 与面板激活页 **高
 
 PlainLedger is a paid LifeOS ledger panel for Obsidian. Bills, categories, and subscription rules stay in vault JSON and sync with your vault.
 
-Current public build: **4.0.28** (48-hour trial).
+Current public build: **4.0.29** (48-hour trial).
 
 ## LifeOS family
 
