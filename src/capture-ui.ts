@@ -753,7 +753,7 @@ function getMumuTesseract() {
 
 function readSafeAreaBottom() {
   const probe = document.createElement("div");
-  probe.style.cssText = "position:fixed;left:0;bottom:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-bottom:env(safe-area-inset-bottom,0px);";
+  probe.className = "plg-safe-area-probe";
   document.body.appendChild(probe);
   const n = parseFloat(window.getComputedStyle(probe).paddingBottom) || 0;
   probe.remove();
