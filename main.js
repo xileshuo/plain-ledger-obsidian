@@ -1505,6 +1505,9 @@ const PLUGIN_PHILOSOPHY_SUBTITLE =
 
 /** 按版本维护；弹窗默认展开最新版，历史版本点击展开 */
 const PLUGIN_CHANGELOG = {
+  "4.0.31": [
+    "审核：安全区高度改为样式类读取，不再直接写样式",
+  ],
   "4.0.30": [
     "报销：待报销、部分到账、已报销。到账另记一笔收入，待报销只看待回金额",
     "分期：记一笔可选期数、每期金额和利息。第一期马上入账，其余在待入账里确认，统计不把总价再记一笔",
@@ -13460,7 +13463,7 @@ function renderPlgNavAppearancePanel(panel, plugin, focusOpts) {
 
 // ─── Plugin bootstrap (obsidian import in src/00-obsidian.ts) ────────────────
 
-const PLUGIN_VERSION = "4.0.30";
+const PLUGIN_VERSION = "4.0.31";
 const VIEW_TYPE = "plain-ledger-dashboard";
 const ICON_NAME = "wallet";
 
