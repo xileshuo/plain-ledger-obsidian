@@ -10,6 +10,11 @@ const PLUGIN_PHILOSOPHY_SUBTITLE =
 
 /** 按版本维护；弹窗默认展开最新版，历史版本点击展开 */
 const PLUGIN_CHANGELOG = {
+  "4.0.30": [
+    "报销：待报销、部分到账、已报销。到账另记一笔收入，待报销只看待回金额",
+    "分期：记一笔可选期数、每期金额和利息。第一期马上入账，其余在待入账里确认，统计不把总价再记一笔",
+    "智能记账：分类和金额之间有空格也能识别，例如「午餐 26.8」",
+  ],
   "4.0.28": [
     "审核：首启卡改回浏览器 localStorage，消除 no-unsupported-api；保留 iconfont/favicon/OCR CDN",
   ],

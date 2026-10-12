@@ -48,6 +48,30 @@ const tests = [
     expect: (p) => p && !p.error && p.amount === 22 && p.category === "餐饮",
   },
   {
+    name: "分类和金额之间的空格",
+    input: "午餐 26.8",
+    expect: (p) => p && !p.error && p.amount === 26.8 && p.subcategory === "午餐",
+  },
+  {
+    name: "空格金额像月日也当金额",
+    input: "午餐 12.5",
+    expect: (p) => {
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      return p && !p.error && p.amount === 12.5 && p.subcategory === "午餐" && String(p.datetime).startsWith(today);
+    },
+  },
+  {
+    name: "空格金额带元",
+    input: "午饭 26.8元",
+    expect: (p) => p && !p.error && p.amount === 26.8 && p.subcategory === "午餐",
+  },
+  {
+    name: "句首月日仍是日期",
+    input: "6.5午餐30",
+    expect: (p) => p && !p.error && p.amount === 30 && p.subcategory === "午餐",
+  },
+  {
     name: "报销识别",
     input: "打车35报销",
     expect: (p) => p && p.reimburse === true && p.amount === 35,

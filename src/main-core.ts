@@ -331,6 +331,56 @@ function formatCalShortAmt(amount) {
 }
 
 /** 本月待付/已到期未入账的订阅与周期项（iCost 待办风格） */
+function roundMoney(n) {
+  return Math.round((Number(n) || 0) * 100) / 100;
+}
+
+function reimbursementOutstanding(t) {
+  if (!t || !t.reimburse || t.flow === "income" || t.flow === "transfer") return 0;
+  const total = roundMoney(t.amount);
+  const got = roundMoney(t.reimbursedAmount);
+  return roundMoney(Math.max(0, total - got));
+}
+
+function reimbursementLabel(t) {
+  if (!t?.reimburse || t.flow === "income" || t.flow === "transfer") return "";
+  const left = reimbursementOutstanding(t);
+  const got = roundMoney(t.reimbursedAmount);
+  if (left <= 0) return "已报销";
+  if (got > 0) return `待报销 剩${fmtMoney(left)}`;
+  return "待报销";
+}
+
+function installmentLabel(t) {
+  const i = Number(t?.installmentIndex) || 0;
+  const n = Number(t?.installmentPeriods) || 0;
+  if (i > 0 && n > 1) return `分期 ${i}/${n}`;
+  return "";
+}
+
+function computeInstallmentPerAmount(principal, periods, interestMode, interest) {
+  const n = Math.max(1, Math.round(Number(periods) || 1));
+  const p = roundMoney(principal);
+  const fee = roundMoney(interest);
+  if (interestMode === "total") return roundMoney((p + fee) / n);
+  if (interestMode === "fee") return roundMoney(p / n + fee);
+  return roundMoney(p / n);
+}
+
+function addMonthsToDateKey(dateStr, months) {
+  const parts = String(dateStr || "").slice(0, 10).split("-").map(Number);
+  const y = parts[0];
+  const m = parts[1];
+  const d = parts[2];
+  if (!y || !m || !d) return "";
+  const dt = new Date(y, m - 1 + (Number(months) || 0), 1);
+  const last = new Date(dt.getFullYear(), dt.getMonth() + 1, 0).getDate();
+  const day = Math.min(d, last);
+  const mm = String(dt.getMonth() + 1).padStart(2, "0");
+  const dd = String(day).padStart(2, "0");
+  return `${dt.getFullYear()}-${mm}-${dd}`;
+}
+
 function collectPendingDues(data, refDate = new Date()) {
   const today = dateKey(refDate);
   const monthPrefix = `${refDate.getFullYear()}-${pad2(refDate.getMonth() + 1)}`;
@@ -369,6 +419,30 @@ function collectPendingDues(data, refDate = new Date()) {
   };
   (data.subscriptions || []).forEach((s) => push(s, "subscription"));
   (data.recurring || []).forEach((r) => push(r, "recurring"));
+  const monthEnd = `${monthPrefix}-${pad2(new Date(refDate.getFullYear(), refDate.getMonth() + 1, 0).getDate())}`;
+  (data.installments || []).forEach((plan) => {
+    if (plan.active === false) return;
+    const posted = Number(plan.posted) || 0;
+    if (posted >= (Number(plan.periods) || 0)) return;
+    const nd = plan.nextDate;
+    if (!nd || nd > monthEnd) return;
+    const nextIndex = posted + 1;
+    const exists = (data.transactions || []).some(
+      (t) => t.installmentId === plan.id && Number(t.installmentIndex) === nextIndex
+    );
+    if (exists) return;
+    const name = plan.title || plan.note || plan.subcategory || plan.category || "分期";
+    dues.push({
+      kind: "installment",
+      id: plan.id,
+      title: `${name} · 第${nextIndex}/${plan.periods}期`,
+      date: nd,
+      amount: Number(plan.perAmount) || 0,
+      category: plan.category || "",
+      subcategory: plan.subcategory || "",
+      overdue: nd < today,
+    });
+  });
   return dues.sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title, "zh"));
 }
 
@@ -697,6 +771,7 @@ function parseLedgerJson(text) {
   if (!data.categories) data.categories = buildCategoriesFromTransactions(data.transactions);
   if (!data.recurring) data.recurring = [];
   if (!data.subscriptions) data.subscriptions = [];
+  if (!data.installments) data.installments = [];
   data.categories.forEach((c) => {
     if (!Array.isArray(c.keywords)) c.keywords = [];
     normalizeCategorySubs(c);
@@ -1157,7 +1232,10 @@ function formatTxDateLabel(datetime) {
 
 function buildTxSubline(t, opts = {}) {
   const parts = [];
-  if (t.reimburse) parts.push("报销");
+  const inst = installmentLabel(t);
+  if (inst) parts.push(inst);
+  const reimb = reimbursementLabel(t);
+  if (reimb) parts.push(reimb);
   if (opts.dateOnly) parts.push(formatTxDateLabel(t.datetime));
   else parts.push(t.datetime.slice(11, 16));
   if (t.note) parts.push(t.note);
@@ -1206,7 +1284,8 @@ function formatPlainLedgerDailyNoteLine(tx) {
   const prefix = tx.flow === "income" ? "+" : tx.flow === "transfer" ? "↔" : "-";
   const cat = tx.subcategory ? `${tx.category}·${tx.subcategory}` : (tx.category || "未分类");
   const note = tx.note ? ` ${tx.note}` : "";
-  const reimb = tx.reimburse ? " [报销]" : "";
+  const reimbLabel = reimbursementLabel(tx);
+  const reimb = reimbLabel ? ` [${reimbLabel}]` : "";
   return `- ${prefix}${fmtMoney(tx.amount)} ${cat}${note}${reimb}`;
 }
 
@@ -1957,6 +2036,7 @@ class LedgerStore {
           transactions: [],
           recurring: [],
           subscriptions: [],
+          installments: [],
         };
         await this.save();
       } else {
@@ -1967,6 +2047,7 @@ class LedgerStore {
           transactions: [],
           recurring: [],
           subscriptions: [],
+          installments: [],
         };
       }
       await this.processDueRecurring();
@@ -1985,6 +2066,7 @@ class LedgerStore {
     this.data = parseLedgerJson(raw);
     if (!this.data.recurring) this.data.recurring = [];
     if (!this.data.subscriptions) this.data.subscriptions = [];
+    if (!this.data.installments) this.data.installments = [];
     if (this.data.__ledgerDirty) {
       delete this.data.__ledgerDirty;
       await this.save();
@@ -2142,6 +2224,7 @@ class LedgerStore {
       transactions: sampleTx,
       subscriptions: [],
       recurring: [],
+      installments: [],
       exportedAt: new Date().toISOString(),
     };
     await this.save();
@@ -2208,14 +2291,17 @@ class LedgerStore {
       if (opts.preserveRules) {
         payload.recurring = payload.recurring?.length ? payload.recurring : (this.data.recurring || []);
         payload.subscriptions = payload.subscriptions?.length ? payload.subscriptions : (this.data.subscriptions || []);
+        if (!payload.installments?.length) payload.installments = this.data.installments || [];
       }
       if (!payload.recurring) payload.recurring = [];
       if (!payload.subscriptions) payload.subscriptions = [];
+      if (!payload.installments) payload.installments = [];
       this.data = payload;
     }
 
     if (!this.data.recurring) this.data.recurring = [];
     if (!this.data.subscriptions) this.data.subscriptions = [];
+    if (!this.data.installments) this.data.installments = [];
     if (!this.data.categories?.length) {
       this.data.categories = buildCategoriesFromTransactions(this.data.transactions);
     }
@@ -2600,7 +2686,149 @@ class LedgerStore {
     await this._generateRecurringAt(item, dateStr);
   }
 
+  _installmentTx(plan, index, dateStr, time) {
+    const noteBase = plan.note
+      ? `${plan.note}（${index}/${plan.periods}）`
+      : `第 ${index}/${plan.periods} 期`;
+    return {
+      id: uid(),
+      datetime: `${dateStr} ${time || "12:00"}`,
+      flow: plan.flow || "expense",
+      category: plan.category,
+      subcategory: plan.subcategory || "",
+      amount: plan.perAmount,
+      note: noteBase,
+      reimburse: !!plan.reimburse && plan.flow !== "income",
+      reimbursedAmount: 0,
+      discount: 0,
+      tags: [],
+      member: "",
+      ledger: plan.ledger || "",
+      accountOut: "",
+      accountIn: "",
+      source: "installment",
+      installmentId: plan.id,
+      installmentIndex: index,
+      installmentPeriods: plan.periods,
+    };
+  }
+
+  async _postInstallmentPeriod(plan, dateStr, time) {
+    const index = (Number(plan.posted) || 0) + 1;
+    if (!plan || index > (Number(plan.periods) || 0)) return null;
+    const exists = (this.data.transactions || []).some(
+      (t) => t.installmentId === plan.id && Number(t.installmentIndex) === index
+    );
+    if (exists) return null;
+    const tx = this._installmentTx(plan, index, dateStr, time);
+    this.data.transactions.unshift(tx);
+    this._ensureCategoryForTx(tx);
+    plan.posted = index;
+    if (index >= plan.periods) {
+      plan.nextDate = "";
+      plan.active = false;
+    } else {
+      plan.nextDate = addMonthsToDateKey(plan.startDate, index);
+      plan.active = true;
+    }
+    return tx;
+  }
+
+  async addInstallmentPlan(input) {
+    const periods = Math.round(Number(input?.periods) || 0);
+    const principal = roundMoney(input?.principal);
+    if (periods < 2 || periods > 60 || principal <= 0) return null;
+    const mode = input.interestMode === "total" || input.interestMode === "fee" ? input.interestMode : "none";
+    const interest = mode === "none" ? 0 : roundMoney(input.interest);
+    const per = roundMoney(input.perAmount) > 0
+      ? roundMoney(input.perAmount)
+      : computeInstallmentPerAmount(principal, periods, mode, interest);
+    if (per <= 0) return null;
+    const datetime = String(input.datetime || "");
+    const start = datetime.slice(0, 10) || dateKey(new Date());
+    const time = datetime.slice(11, 16) || "12:00";
+    const plan = {
+      id: uid(),
+      title: input.note || input.subcategory || input.category || "分期",
+      flow: input.flow === "income" ? "income" : "expense",
+      category: input.category,
+      subcategory: input.subcategory || "",
+      note: input.note || "",
+      ledger: input.ledger || "",
+      principal,
+      periods,
+      perAmount: per,
+      interestMode: mode,
+      interest,
+      posted: 0,
+      startDate: start,
+      nextDate: start,
+      reimburse: !!input.reimburse && input.flow !== "income",
+      active: true,
+    };
+    if (!this.data.installments) this.data.installments = [];
+    this.data.installments.push(plan);
+    const tx = await this._postInstallmentPeriod(plan, start, time);
+    if (!tx) {
+      this.data.installments.pop();
+      return null;
+    }
+    learnKeywordsFromTransaction(this.data, tx, plan.note || "");
+    await this.save();
+    await appendPlainLedgerDailyNote(this.plugin.app, this.plugin, tx);
+    await this.processCarryovers();
+    return plan;
+  }
+
+  async settleReimbursement(txId, amount) {
+    const tx = (this.data.transactions || []).find((t) => t.id === txId);
+    if (!tx || tx.flow === "income" || tx.flow === "transfer") return false;
+    tx.reimburse = true;
+    const left = reimbursementOutstanding(tx);
+    const pay = roundMoney(amount);
+    if (left <= 0 || pay <= 0) return false;
+    const got = roundMoney(Math.min(pay, left));
+    const now = new Date();
+    const income = {
+      id: uid(),
+      datetime: `${dateKey(now)} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`,
+      flow: "income",
+      category: "报销到账",
+      subcategory: tx.category || "",
+      amount: got,
+      note: `报销入账 · ${tx.note || tx.subcategory || tx.category || ""}`.replace(/\s+$/, ""),
+      reimburse: false,
+      reimbursedAmount: 0,
+      discount: 0,
+      tags: [],
+      member: "",
+      ledger: tx.ledger || this.data.ledger || "",
+      accountOut: "",
+      accountIn: "",
+      source: "reimburse",
+      reimburseFor: tx.id,
+    };
+    tx.reimbursedAmount = roundMoney((Number(tx.reimbursedAmount) || 0) + got);
+    this.data.transactions.unshift(income);
+    this._ensureCategoryForTx(income);
+    await this.save();
+    await appendPlainLedgerDailyNote(this.plugin.app, this.plugin, income);
+    await this.processCarryovers();
+    return true;
+  }
+
   async recordPendingDue(kind, id) {
+    if (kind === "installment") {
+      const plan = (this.data.installments || []).find((p) => p.id === id);
+      if (!plan || plan.active === false) return false;
+      const dateStr = plan.nextDate || dateKey(new Date());
+      const tx = await this._postInstallmentPeriod(plan, dateStr, "12:00");
+      if (!tx) return false;
+      await this.save();
+      await appendPlainLedgerDailyNote(this.plugin.app, this.plugin, tx);
+      await this.processCarryovers();
+      return true;
+    }
     if (kind === "recurring") {
       const item = (this.data.recurring || []).find((r) => r.id === id);
       if (!item || item.active === false) return false;
@@ -3857,9 +4085,10 @@ class LedgerDashboardView extends ItemView {
       this.fillBillList(listContainer, data, now);
     };
 
-    const reimbCount = data.transactions.filter((t) => !!t.reimburse).length;
+    const pendingReimb = data.transactions.filter((t) => reimbursementOutstanding(t) > 0);
+    const reimbLeft = pendingReimb.reduce((sum, t) => sum + reimbursementOutstanding(t), 0);
     const reimbBtn = toolbar.createEl("button", {
-      text: reimbCount ? `报销 · ${reimbCount}` : "报销",
+      text: pendingReimb.length ? `待报销 · ¥${fmtMoney(reimbLeft)}` : "待报销",
       cls: "plg-list-filter-chip" + (this.listReimburseOnly ? " active" : ""),
       attr: { type: "button" },
     });
@@ -3916,7 +4145,7 @@ class LedgerDashboardView extends ItemView {
       recent = recent.filter((t) => matchTransactionSearch(t, q));
     }
     if (this.listReimburseOnly) {
-      recent = recent.filter((t) => !!t.reimburse);
+      recent = recent.filter((t) => reimbursementOutstanding(t) > 0);
     }
 
     const allGroups = groupByDate(recent);
@@ -4805,6 +5034,7 @@ module.exports = class PlainLedgerPlugin extends Plugin {
         transactions: [],
         recurring: [],
         subscriptions: [],
+        installments: [],
       };
     }
     if (typeof PLUGIN_EDITION === "string" && PLUGIN_EDITION === "public") {

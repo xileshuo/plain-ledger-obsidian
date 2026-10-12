@@ -322,9 +322,29 @@ function looksLikeMdDate(token, raw, index) {
   return /[\u4e00-\u9fff]/.test(after);
 }
 
+function isCalendarToken(month, day) {
+  const m = Number(month);
+  const d = Number(day);
+  return m >= 1 && m <= 12 && d >= 1 && d <= 31;
+}
+
+/** 中文后面、句子末尾的「12.5 / 26.8元」是金额，不是月.日 */
+function isTrailingMoneyToken(str, offset, full) {
+  const before = String(str || "").slice(0, offset);
+  const rest = String(str || "").slice(offset + full.length);
+  return /[\u4e00-\u9fff]\s*$/.test(before) && /^\s*[元块]?\s*$/.test(rest);
+}
+
 function stripDateTokens(text) {
   return String(text || "")
-    .replace(/(?:^|\s)(\d{1,2})[.\-/](\d{1,2})(?:日)?(?=[\u4e00-\u9fff\s]|$)/g, " ")
+    .replace(
+      /(^|\s)(\d{1,2})[.\-/](\d{1,2})(?:日)?(?=[\u4e00-\u9fff\s]|$)/g,
+      (full, _lead, month, day, offset, str) => {
+        if (!isCalendarToken(month, day)) return full;
+        if (isTrailingMoneyToken(str, offset, full)) return full;
+        return " ";
+      }
+    )
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -365,13 +385,11 @@ function parseRelativeDate(text) {
     return parseCalendarDate(null, parseInt(m[1], 10), parseInt(m[2], 10), now);
   }
 
-  m = raw.match(/(?:^|\s)(\d{1,2})[.\-/](\d{1,2})(?:日)?(?=\s|[^\d]|$)/);
-  if (m) {
-    const month = parseInt(m[1], 10);
-    const day = parseInt(m[2], 10);
-    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-      return parseCalendarDate(null, month, day, now);
-    }
+  m = raw.matchAll(/(^|\s)(\d{1,2})[.\-/](\d{1,2})(?:日)?(?=\s|[^\d]|$)/g);
+  for (const hit of m) {
+    if (!isCalendarToken(hit[2], hit[3])) continue;
+    if (isTrailingMoneyToken(raw, hit.index ?? 0, hit[0])) continue;
+    return parseCalendarDate(null, parseInt(hit[2], 10), parseInt(hit[3], 10), now);
   }
 
   return now;

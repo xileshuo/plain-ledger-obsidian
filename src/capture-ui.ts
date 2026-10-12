@@ -354,6 +354,7 @@ function openPlgOverlay(opts) {
   attachOverlayPanelDrag(overlay, panel, head);
   overlay.addEventListener("click", (e) => {
     if (e.target !== overlay) return;
+    if (overlay._plgIgnoreBackdropUntil && Date.now() < overlay._plgIgnoreBackdropUntil) return;
     close();
   });
   panel.addEventListener("click", (e) => e.stopPropagation());
@@ -565,7 +566,11 @@ function measureManualCaptureAnchor(panel) {
 
 function measureCaptureContentHeight(panel) {
   // 与 styles.css 桌面记一笔 max-height: min(86vh, 640px) 对齐，并计入提示行，避免底部按钮被裁切
-  const maxH = Math.min(Math.round((window.innerHeight || 800) * 0.86), 640);
+  const instOpen = panel.classList.contains("plg-capture-installment-open");
+  const maxH = Math.min(
+    Math.round((window.innerHeight || 800) * (instOpen ? 0.92 : 0.86)),
+    instOpen ? 780 : 640
+  );
   const manualH = measureManualCaptureAnchor(panel);
   const cardH = Math.max(manualH, 280);
   if (!cardH) return 420;
@@ -746,6 +751,15 @@ function getMumuTesseract() {
   return null;
 }
 
+function readSafeAreaBottom() {
+  const probe = document.createElement("div");
+  probe.style.cssText = "position:fixed;left:0;bottom:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-bottom:env(safe-area-inset-bottom,0px);";
+  document.body.appendChild(probe);
+  const n = parseFloat(window.getComputedStyle(probe).paddingBottom) || 0;
+  probe.remove();
+  return n;
+}
+
 function measureMobileVisualViewport() {
   const vv = window.visualViewport;
   const ih = window.innerHeight || document.documentElement.clientHeight || 640;
@@ -848,7 +862,8 @@ function bindMobileOverlayViewport(overlay, panel, cls = "") {
       || String(cls).includes("plg-budget-edit-modal")
       || String(cls).includes("plg-subscription-overlay")
       || String(cls).includes("plg-recurring-overlay")
-      || String(cls).includes("plg-cat-edit-modal")
+      ||       String(cls).includes("plg-cat-edit-modal")
+      || String(cls).includes("plg-installment-sheet")
     ));
   if (!mobileFit || !isMobileCaptureUi()) return null;
 
@@ -864,7 +879,7 @@ function bindMobileOverlayViewport(overlay, panel, cls = "") {
     if (pollRaf) window.cancelAnimationFrame(pollRaf);
     pollRaf = 0;
   };
-  const pollMs = isCaptureOverlay ? 3200 : 1100;
+  const pollMs = isCaptureOverlay ? 3200 : (String(cls).includes("plg-installment-sheet") ? 1800 : 1100);
   const startPoll = () => {
     stopPoll();
     const t0 = Date.now();
@@ -928,7 +943,45 @@ function bindMobileOverlayViewport(overlay, panel, cls = "") {
     if (!isCapture) {
       const vv = measureMobileVisualViewport();
       panel.addClass("plg-overlay-panel-geom");
-      if (isCatEditModal && !keyboardUp) {
+      const isInstallmentSheet = String(cls).includes("plg-installment-sheet");
+      if (isInstallmentSheet) {
+        const inputFocused = !!panel.querySelector("input:not([type='checkbox']):focus, textarea:focus");
+        if (!inputFocused) {
+          overlay._plgSheetBaseIh = Math.max(overlay._plgSheetBaseIh || 0, vv.ih);
+        }
+        const baseIh = overlay._plgSheetBaseIh || vv.ih;
+        const ihShrunk = baseIh - vv.ih > 80;
+        let kb = vv.kbGap;
+        if (inputFocused && !ihShrunk && kb < 140) {
+          kb = Math.round(baseIh * CAPTURE_ASSUMED_KB_RATIO);
+        }
+        let visibleBottom = vv.top + vv.vvH;
+        const keyboardUpSheet = inputFocused && kb >= 140;
+        if (keyboardUpSheet) visibleBottom = vv.top + Math.min(vv.vvH, vv.ih - kb);
+        if (overlay._plgSafeBottom == null) overlay._plgSafeBottom = readSafeAreaBottom();
+        const bottomGap = keyboardUpSheet ? 8 : Math.max(28, (overlay._plgSafeBottom || 0) + 12);
+        visibleBottom = Math.max(vv.top + 220, visibleBottom - bottomGap);
+        const head = panel.querySelector(".plg-overlay-head");
+        const sheetBody = panel.querySelector(".plg-overlay-body");
+        const contentH = Math.max(
+          240,
+          (head?.offsetHeight || 48) + (sheetBody?.scrollHeight || 200)
+        );
+        const maxH = Math.max(220, visibleBottom - vv.top);
+        const height = Math.min(contentH, maxH);
+        const top = Math.max(vv.top, visibleBottom - height);
+        panel.toggleClass("plg-inst-sheet-kb", inputFocused && kb > 48);
+        applyCssProps(panel, {
+          "--plg-geom-left": `${vv.left}px`,
+          "--plg-geom-width": `${vv.vvW}px`,
+          "--plg-geom-min-height": "0",
+          "--plg-geom-top": `${Math.round(top)}px`,
+          "--plg-geom-height": `${Math.round(height)}px`,
+          "--plg-geom-max-height": `${Math.round(height)}px`,
+          "--plg-geom-bottom": "auto",
+          "--plg-geom-radius": "16px 16px 0 0",
+        });
+      } else if (isCatEditModal && !keyboardUp) {
         applyCssProps(panel, {
           "--plg-geom-left": `${vv.left}px`,
           "--plg-geom-width": `${vv.vvW}px`,
@@ -967,15 +1020,31 @@ function bindMobileOverlayViewport(overlay, panel, cls = "") {
 
   const onFocusIn = (e) => {
     if (!e.target?.matches?.("input, textarea, select")) return;
+    if (String(cls).includes("plg-installment-sheet")) {
+      overlay._plgIgnoreBackdropUntil = Date.now() + 900;
+      scheduleCaptureSync();
+      startPoll();
+      return;
+    }
     window.requestAnimationFrame(() => resetCaptureScrollAnchors(panel));
     scheduleCaptureSync();
     startPoll();
   };
+  const onSheetPointerDown = (e) => {
+    if (!String(cls).includes("plg-installment-sheet")) return;
+    if (e.target?.closest?.("input, textarea")) {
+      overlay._plgIgnoreBackdropUntil = Date.now() + 900;
+    }
+  };
 
   const onFocusOut = () => window.setTimeout(sync, 140);
 
+  if (String(cls).includes("plg-installment-sheet")) {
+    overlay._plgSheetBaseIh = window.innerHeight || 0;
+  }
   sync();
   overlay._mumuSyncViewport = sync;
+  panel.addEventListener("pointerdown", onSheetPointerDown, true);
   panel.addEventListener("focusin", onFocusIn);
   panel.addEventListener("focusout", onFocusOut);
   const onOrient = () => {
@@ -993,10 +1062,14 @@ function bindMobileOverlayViewport(overlay, panel, cls = "") {
   return () => {
     stopPoll();
     delete overlay._mumuSyncViewport;
-    if (isCaptureOverlay) resetCaptureFixedPanelHeight();
-    document.documentElement.classList.remove("plg-overlay-scroll-lock");
-    document.documentElement.classList.remove("plg-capture-overlay-open");
-    document.body.removeClass("plg-capture-kb-open");
+    if (isCaptureOverlay) {
+      resetCaptureFixedPanelHeight();
+      document.documentElement.classList.remove("plg-capture-overlay-open");
+      document.body.removeClass("plg-capture-kb-open");
+    }
+    const others = [...document.querySelectorAll(".plg-overlay-mobile-fit")].filter((el) => el !== overlay);
+    if (!others.length) document.documentElement.classList.remove("plg-overlay-scroll-lock");
+    panel.removeEventListener("pointerdown", onSheetPointerDown, true);
     panel.removeEventListener("focusin", onFocusIn);
     panel.removeEventListener("focusout", onFocusOut);
     vv?.removeEventListener("resize", sync);
@@ -1138,6 +1211,15 @@ function openEditTransaction(app, plugin, tx, onSaved, onDeleted, opts = {}) {
         }
       }
 
+      if (editTx.installmentIndex && editTx.installmentPeriods) {
+        const instBanner = formHost.createDiv({ cls: "plg-tx-source-banner" });
+        instBanner.createDiv({
+          cls: "plg-tx-source-link-static",
+          text: `分期 ${editTx.installmentIndex}/${editTx.installmentPeriods}`,
+        });
+        divCls(instBanner, "plg-muted plg-tx-source-hint").setText("这一期已入账。之后各期在待入账里确认，统计只算已入账的期。");
+      }
+
       const row = (label, el) => {
         const r = formHost.createDiv({ cls: "plg-modal-row" });
         r.createSpan({ text: label });
@@ -1182,6 +1264,41 @@ function openEditTransaction(app, plugin, tx, onSaved, onDeleted, opts = {}) {
       const syncReimbVisible = () => {
         reimbRow.toggleClass("plg-is-hidden", fields.flow.value !== "expense");
         if (fields.flow.value !== "expense") fields.reimburse.checked = false;
+        syncSettleVisible();
+      };
+      const settleRow = divCls(formHost, "plg-bill-form-row plg-edit-settle-row");
+      settleRow.createSpan({ cls: "plg-bill-form-label", text: "到账" });
+      const settleCtrl = divCls(settleRow, "plg-bill-form-control plg-link-inline-control");
+      fields.settleAmt = settleCtrl.createEl("input", {
+        type: "number",
+        cls: "plg-input-num",
+        attr: { step: "0.01", min: "0", inputmode: "decimal", placeholder: "到账金额" },
+      });
+      const settleBtn = settleCtrl.createEl("button", {
+        text: "记到账",
+        cls: "plg-btn-primary",
+        attr: { type: "button" },
+      });
+      const syncSettleVisible = () => {
+        const left = reimbursementOutstanding({
+          ...editTx,
+          flow: fields.flow.value,
+          amount: Number(fields.amt?.value || editTx.amount),
+          reimburse: !!fields.reimburse.checked,
+        });
+        const show = !!editTx.id && fields.flow.value === "expense" && fields.reimburse.checked && left > 0;
+        settleRow.toggleClass("plg-is-hidden", !show);
+        if (show && !fields.settleAmt.value) fields.settleAmt.value = String(left);
+      };
+      fields.reimburse.onchange = () => syncSettleVisible();
+      settleBtn.onclick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const ok = await plugin.store.settleReimbursement(editTx.id, Number(fields.settleAmt.value));
+        if (!ok) return new Notice("到账金额无效，或这笔已经报完");
+        new Notice("已另记一笔报销到账");
+        onSaved?.();
+        close();
       };
       syncReimbVisible();
 
@@ -1338,6 +1455,135 @@ function parsePositiveAmount(raw) {
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
+const INSTALLMENT_PERIOD_CHOICES = [3, 6, 9, 12, 24, 36, 48];
+
+function fillInstallmentPeriodSelect(select, selected) {
+  const n = Number(selected);
+  const value = INSTALLMENT_PERIOD_CHOICES.includes(n) ? String(n) : "12";
+  appendSelectOptions(
+    select,
+    INSTALLMENT_PERIOD_CHOICES.map((period) => ({ value: String(period), label: `${period} 期` })),
+    value
+  );
+}
+
+function installmentSheetHint(mode) {
+  if (mode === "total") return "总利息平摊进每一期。金额是总价，第一期马上入账，其余进待入账。";
+  if (mode === "fee") return "每期另加这笔手续费。金额是总价，第一期马上入账，其余进待入账。";
+  return "金额是总价，平均分成每期。第一期马上入账，其余进待入账。";
+}
+
+/** 分期三级面板。主界面只留勾选，点「分期」才弹出。关闭不改原设置。 */
+function openInstallmentSheet(draft, onApply) {
+  try {
+    const active = document.activeElement;
+    if (active && active !== document.body && typeof active.blur === "function") active.blur();
+  } catch (_) { /* ignore */ }
+  const state = { perTouched: !!draft?.perTouched };
+  openPlgOverlay({
+    title: "分期",
+    cls: "plg-installment-sheet",
+    stack: true,
+    tier: 3,
+    build: (body, close) => {
+      body.closest(".plg-overlay")?.addClass("plg-inst-sheet-host");
+      const row = (labelText) => {
+        const line = body.createDiv({ cls: "plg-inst-sheet-row" });
+        line.createSpan({ text: labelText });
+        return line;
+      };
+      const periodsInput = row("期数").createEl("select", { attr: { "aria-label": "期数" } });
+      fillInstallmentPeriodSelect(periodsInput, draft?.periods || 12);
+      const modeInput = row("利息").createEl("select", { attr: { "aria-label": "利息方式" } });
+      appendSelectOptions(modeInput, [
+        { value: "none", label: "无" },
+        { value: "total", label: "总利息平摊" },
+        { value: "fee", label: "每期手续费" },
+      ], draft?.mode || "none");
+      const interestRow = row("利息金额");
+      const interestInput = interestRow.createEl("input", {
+        type: "text",
+        attr: { inputmode: "decimal", placeholder: "0", "aria-label": "利息金额" },
+      });
+      interestInput.value = draft?.interest ? String(draft.interest) : "";
+      const perInput = row("每期入账").createEl("input", {
+        type: "text",
+        attr: { inputmode: "decimal", placeholder: "0.00", "aria-label": "每期入账" },
+      });
+      const hint = body.createDiv({ cls: "plg-muted plg-inst-sheet-hint" });
+      const syncInterestVis = () => {
+        interestRow.toggleClass("plg-is-hidden", modeInput.value === "none");
+        hint.setText(installmentSheetHint(modeInput.value));
+      };
+      const syncPer = () => {
+        if (state.perTouched) return;
+        const per = computeInstallmentPerAmount(
+          draft?.principal || 0,
+          Number(periodsInput.value) || 0,
+          modeInput.value,
+          modeInput.value === "none" ? 0 : (parsePositiveAmount(interestInput.value) || 0)
+        );
+        perInput.value = per > 0 ? String(per) : "";
+      };
+      if (state.perTouched && draft?.per) perInput.value = String(draft.per);
+      else syncPer();
+      syncInterestVis();
+      periodsInput.onchange = () => { state.perTouched = false; syncPer(); };
+      modeInput.onchange = () => { state.perTouched = false; syncInterestVis(); syncPer(); };
+      interestInput.oninput = () => { state.perTouched = false; syncPer(); };
+      perInput.oninput = () => { state.perTouched = true; };
+      const actions = body.createDiv({ cls: "plg-inst-sheet-actions" });
+      if (draft?.on) {
+        elCls(actions, "button", "plg-capture-tool", {
+          text: "取消分期",
+          attr: { type: "button" },
+        }).onclick = () => {
+          onApply?.({ on: false });
+          close();
+        };
+      }
+      elCls(actions, "button", "plg-capture-send mod-cta", {
+        text: "确定",
+        attr: { type: "button" },
+      }).onclick = () => {
+        const periods = Math.round(Number(periodsInput.value) || 0);
+        const mode = modeInput.value === "total" || modeInput.value === "fee" ? modeInput.value : "none";
+        const interest = mode === "none" ? 0 : (parsePositiveAmount(interestInput.value) || 0);
+        const per = parsePositiveAmount(perInput.value);
+        if (periods < 2) return new Notice("请选择期数");
+        if (mode !== "none" && !interest) return new Notice("请填写利息金额");
+        if ((draft?.principal || 0) > 0 && !per) return new Notice("请填写每期金额");
+        onApply?.({
+          on: true,
+          periods,
+          mode,
+          interest,
+          per,
+          perTouched: state.perTouched,
+        });
+        close();
+      };
+    },
+  });
+}
+
+function syncCaptureInstallmentOpen(fromEl) {
+  const panel = fromEl?.closest?.(".plg-overlay-panel.plg-capture-overlay");
+  if (!panel) return;
+  const open = !!panel.querySelector(
+    ".plg-manual-panel .plg-manual-installment:not(.plg-is-hidden), .plg-preview-inst-fields:not(.plg-is-hidden)"
+  );
+  panel.classList.toggle("plg-capture-installment-open", open);
+  if (panel.classList.contains("plg-overlay-panel-mobile-fit")) {
+    _captureShellHeightLock = null;
+    _captureShellKbAnchored = false;
+    scheduleMobileOverlaySync(panel.closest(".plg-overlay-mobile-fit") || panel);
+    return;
+  }
+  _captureLayoutLocked.delete(panel);
+  scheduleDesktopCaptureLayoutSync(panel.querySelector(".plg-capture-modal-body"));
+}
+
 // ─── Manual capture ──────────────────────────────────────────────────────────
 
 class ManualCapturePanel {
@@ -1381,7 +1627,7 @@ class ManualCapturePanel {
       if (!compact) formDock.addClass("plg-manual-form-dock-desktop");
       const metaBlock = formDock.createDiv({ cls: "plg-manual-meta-block plg-manual-meta-block-mac" });
 
-      // 顶栏：支出/收入 + 提示 + 标记报销
+      // 顶栏：支出/收入居左，待报销与分期居右
       const metaRowTop = divCls(metaBlock, "plg-manual-meta-row plg-manual-meta-row-top");
       const flowCell = divCls(metaRowTop, "plg-manual-meta-cell plg-manual-meta-cell-flow");
       const flowBar = divCls(flowCell, "plg-flow-tabs plg-flow-tabs-inline");
@@ -1413,15 +1659,37 @@ class ManualCapturePanel {
       const reimbCell = divCls(metaRowTop, "plg-manual-meta-cell plg-manual-meta-cell-reimb");
       const reimbLabel = reimbCell.createEl("label", {
         cls: "plg-manual-reimb-check-label",
-        attr: { "aria-label": "标记报销" },
+        attr: { "aria-label": "待报销" },
       });
       this.reimburseCheck = reimbLabel.createEl("input", {
         type: "checkbox",
         cls: "plg-manual-reimb-check",
       });
-      reimbLabel.createSpan({ text: "标记报销", cls: "plg-manual-reimb-label" });
+      reimbLabel.createSpan({ text: "待报销", cls: "plg-manual-reimb-label" });
       this.reimburseCheck.checked = this.reimburse;
       this.reimburseCheck.onchange = () => { this.reimburse = this.reimburseCheck.checked; };
+
+      const instLabel = reimbCell.createEl("label", {
+        cls: "plg-manual-reimb-check-label plg-manual-inst-toggle",
+        attr: { "aria-label": "分期" },
+      });
+      this.installmentCheck = instLabel.createEl("input", {
+        type: "checkbox",
+        cls: "plg-manual-reimb-check",
+      });
+      this.installmentLabelEl = instLabel.createSpan({ text: "分期", cls: "plg-manual-reimb-label" });
+      this.installmentOn = false;
+      this.installmentPeriods = 12;
+      this.installmentMode = "none";
+      this.installmentInterest = 0;
+      this.installmentPer = 0;
+      this.installmentPerTouched = false;
+      this.installmentCheck.checked = false;
+      this.installmentCheck.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.installmentCheck.checked = !!this.installmentOn;
+        this.openInstallmentEditor();
+      });
 
       const inlineField = (row, title, cellCls) => {
         const cell = divCls(row, `plg-manual-meta-cell plg-manual-meta-cell-inline ${cellCls}`);
@@ -1451,6 +1719,8 @@ class ManualCapturePanel {
       this.amountInput.oninput = () => {
         this.amount = sanitizeAmountInput(this.amountInput.value);
         this.amountInput.value = this.amount;
+        this.installmentPerTouched = false;
+        this.syncInstallmentPreview();
       };
       this.amountInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
@@ -1557,6 +1827,8 @@ class ManualCapturePanel {
         });
       });
 
+      stopCaptureControlBubble(this.installmentCheck);
+
       const saveRow = formDock.createDiv({ cls: "plg-manual-save-row" });
       // 与智能页「粘贴 / 识别」同套：次要浅底 + 主色 CTA
       elCls(saveRow, "button", "plg-capture-tool plg-manual-save-again", {
@@ -1564,8 +1836,8 @@ class ManualCapturePanel {
         attr: { type: "button" },
       }).onclick = () => this.save(true);
       elCls(saveRow, "button", "plg-capture-send mod-cta plg-manual-save", {
-        text: "保存",
-        attr: { type: "button", title: "保存（⌘↩ / Ctrl+↩）" },
+        text: "入账",
+        attr: { type: "button", title: "入账（⌘↩ / Ctrl+↩）" },
       }).onclick = () => this.save(false);
       this.syncFlowUi();
     }, "plg-manual-panel");
@@ -1731,7 +2003,62 @@ class ManualCapturePanel {
     if (!showReimb) {
       this.reimburse = false;
       if (this.reimburseCheck) this.reimburseCheck.checked = false;
+      this.resetInstallment();
     }
+  }
+
+  resetInstallment() {
+    this.installmentOn = false;
+    this.installmentPerTouched = false;
+    this.installmentPeriods = 12;
+    this.installmentMode = "none";
+    this.installmentInterest = 0;
+    this.installmentPer = 0;
+    if (this.installmentCheck) this.installmentCheck.checked = false;
+    this.syncInstallmentLabel();
+  }
+
+  syncInstallmentLabel() {
+    this.installmentLabelEl?.setText(this.installmentOn ? `分期·${this.installmentPeriods}` : "分期");
+  }
+
+  applyInstallmentResult(next) {
+    if (!next?.on) {
+      this.resetInstallment();
+      return;
+    }
+    this.installmentOn = true;
+    this.installmentPeriods = next.periods;
+    this.installmentMode = next.mode;
+    this.installmentInterest = next.interest;
+    this.installmentPer = next.per;
+    this.installmentPerTouched = !!next.perTouched;
+    if (this.installmentCheck) this.installmentCheck.checked = true;
+    this.syncInstallmentPreview();
+    this.syncInstallmentLabel();
+  }
+
+  openInstallmentEditor() {
+    openInstallmentSheet({
+      principal: parsePositiveAmount(this.amount),
+      periods: this.installmentPeriods || 12,
+      mode: this.installmentMode || "none",
+      interest: this.installmentInterest || 0,
+      per: this.installmentPer || 0,
+      perTouched: this.installmentPerTouched,
+      on: this.installmentOn,
+    }, (next) => this.applyInstallmentResult(next));
+  }
+
+  syncInstallmentPreview() {
+    if (!this.installmentOn || this.installmentPerTouched) return;
+    const per = computeInstallmentPerAmount(
+      parsePositiveAmount(this.amount),
+      this.installmentPeriods || 0,
+      this.installmentMode || "none",
+      this.installmentMode === "none" ? 0 : (this.installmentInterest || 0)
+    );
+    if (per > 0) this.installmentPer = per;
   }
 
   updateSelectionHint() {
@@ -1832,6 +2159,42 @@ class ManualCapturePanel {
       const n = new Date();
       return `${dateKey(n)} ${pad2(n.getHours())}:${pad2(n.getMinutes())}`;
     })();
+    if (this.installmentOn && this.flow === "expense") {
+      this.syncInstallmentPreview();
+      const periods = Math.round(Number(this.installmentPeriods) || 0);
+      if (periods < 2 || periods > 60) return new Notice("分期请填 2–60 期");
+      const per = parsePositiveAmount(this.installmentPer);
+      if (!per) return new Notice("请先点分期，填好每期金额");
+      const mode = this.installmentMode === "total" || this.installmentMode === "fee" ? this.installmentMode : "none";
+      const interest = mode === "none" ? 0 : (parsePositiveAmount(this.installmentInterest) || 0);
+      try {
+        const plan = await this.plugin.store.addInstallmentPlan({
+          principal: amount,
+          periods,
+          perAmount: per,
+          interestMode: mode,
+          interest,
+          datetime,
+          flow: this.flow,
+          category: this.selectedCat,
+          subcategory: this.selectedSub || "",
+          note: this.note || "",
+          ledger: this.plugin.store.data.ledger || "",
+          reimburse: !!this.reimburse,
+        });
+        if (!plan) return new Notice("分期未保存");
+        new Notice(`已入账第 1/${plan.periods} 期 · 每期 ¥${fmtMoney(plan.perAmount)}`);
+      } catch (err) {
+        console.error(err);
+        return new Notice("记账失败，请重试");
+      }
+      if (keepOpen) {
+        this.clearDraft({ keepDatetime: true, silent: true });
+        focusCaptureField(this.amountInput);
+      }
+      this.callbacks.onSaved?.({ keepOpen });
+      return;
+    }
     const tx = {
       id: uid(),
       datetime,
@@ -1871,6 +2234,7 @@ class ManualCapturePanel {
     this.note = "";
     this.reimburse = false;
     if (this.reimburseCheck) this.reimburseCheck.checked = false;
+    this.resetInstallment();
     if (this.amountInput) this.amountInput.value = "";
     const noteInp = this.rootEl?.querySelector?.(".plg-manual-note-input");
     if (noteInp) noteInp.value = "";
@@ -1901,6 +2265,125 @@ function patchCaptureParsed(parsed, patch) {
     next.matchLabel = "手动修正";
   }
   return next;
+}
+
+function mountPreviewInstallment(previewEl, parsed) {
+  const box = previewEl.createDiv({ cls: "plg-preview-installment" });
+  const flagRow = box.createDiv({ cls: "plg-preview-flag-row" });
+  const reimbLabel = flagRow.createEl("label", {
+    cls: "plg-manual-reimb-check-label",
+    attr: { "aria-label": "待报销" },
+  });
+  const reimbCheck = reimbLabel.createEl("input", { type: "checkbox", cls: "plg-manual-reimb-check" });
+  reimbLabel.createSpan({ text: "待报销", cls: "plg-manual-reimb-label" });
+  reimbCheck.checked = !!parsed.reimburse;
+  reimbCheck.onchange = () => { parsed.reimburse = reimbCheck.checked; };
+  const label = flagRow.createEl("label", {
+    cls: "plg-manual-reimb-check-label",
+    attr: { "aria-label": "分期" },
+  });
+  const check = label.createEl("input", { type: "checkbox", cls: "plg-manual-reimb-check" });
+  const instText = label.createSpan({
+    text: parsed.installmentOn ? `分期·${parsed.installmentPeriods || 12}` : "分期",
+    cls: "plg-manual-reimb-label",
+  });
+  check.checked = !!parsed.installmentOn;
+  const apply = (next) => {
+    if (!next?.on) {
+      parsed.installmentOn = false;
+      parsed.installmentPerTouched = false;
+      parsed.installmentPeriods = 12;
+      parsed.installmentMode = "none";
+      parsed.installmentInterest = 0;
+      parsed.installmentPer = 0;
+    } else {
+      parsed.installmentOn = true;
+      parsed.installmentPeriods = next.periods;
+      parsed.installmentMode = next.mode;
+      parsed.installmentInterest = next.interest;
+      parsed.installmentPer = next.per;
+      parsed.installmentPerTouched = !!next.perTouched;
+      if (!parsed.installmentPerTouched) {
+        const per = computeInstallmentPerAmount(
+          parsed.amount,
+          parsed.installmentPeriods,
+          parsed.installmentMode,
+          parsed.installmentMode === "none" ? 0 : parsed.installmentInterest
+        );
+        if (per > 0) parsed.installmentPer = per;
+      }
+    }
+    check.checked = !!parsed.installmentOn;
+    instText.setText(parsed.installmentOn ? `分期·${parsed.installmentPeriods}` : "分期");
+  };
+  check.addEventListener("click", (e) => {
+    e.preventDefault();
+    check.checked = !!parsed.installmentOn;
+    openInstallmentSheet({
+      principal: parsePositiveAmount(parsed.amount),
+      periods: parsed.installmentPeriods || 12,
+      mode: parsed.installmentMode || "none",
+      interest: parsed.installmentInterest || 0,
+      per: parsed.installmentPer || 0,
+      perTouched: !!parsed.installmentPerTouched,
+      on: !!parsed.installmentOn,
+    }, apply);
+  });
+  [check, reimbCheck].forEach((el) => stopCaptureControlBubble(el));
+}
+
+async function commitParsedEntry(plugin, parsed, source, learnText) {
+  if (parsed?.installmentOn && parsed.flow !== "income" && parsed.flow !== "transfer") {
+    const periods = Math.round(Number(parsed.installmentPeriods) || 0);
+    if (periods < 2 || periods > 60) {
+      new Notice("分期请填 2–60 期");
+      return null;
+    }
+    if (!parsed.installmentPerTouched) {
+      const fresh = computeInstallmentPerAmount(
+        parsed.amount,
+        periods,
+        parsed.installmentMode || "none",
+        (parsed.installmentMode || "none") === "none" ? 0 : (parsePositiveAmount(parsed.installmentInterest) || 0)
+      );
+      if (fresh > 0) parsed.installmentPer = fresh;
+    }
+    const per = parsePositiveAmount(parsed.installmentPer);
+    if (!per) {
+      new Notice("请填写每期金额");
+      return null;
+    }
+    const mode = parsed.installmentMode === "total" || parsed.installmentMode === "fee" ? parsed.installmentMode : "none";
+    const plan = await plugin.store.addInstallmentPlan({
+      principal: parsed.amount,
+      periods,
+      perAmount: per,
+      interestMode: mode,
+      interest: mode === "none" ? 0 : (parsePositiveAmount(parsed.installmentInterest) || 0),
+      datetime: parsed.datetime,
+      flow: "expense",
+      category: parsed.category,
+      subcategory: parsed.subcategory || "",
+      note: parsed.note || "",
+      ledger: plugin.store.data.ledger || "",
+      reimburse: !!parsed.reimburse,
+    });
+    if (!plan) {
+      new Notice("分期未保存");
+      return null;
+    }
+    new Notice(`已入账第 1/${plan.periods} 期 · 每期 ¥${fmtMoney(plan.perAmount)}`);
+    return {
+      flow: "expense",
+      category: parsed.category,
+      subcategory: parsed.subcategory || "",
+      amount: plan.perAmount,
+    };
+  }
+  const tx = parsedToTransaction(parsed, plugin.store.data.ledger, source);
+  await plugin.store.addTransaction(tx, { learnText });
+  new Notice("已记账");
+  return tx;
 }
 
 function renderCapturePreview(previewEl, parsed, ctx) {
@@ -2001,6 +2484,10 @@ function renderCapturePreview(previewEl, parsed, ctx) {
   });
   addClasses(amtEl, "plg-preview-amt", parsed.flow === "income" ? "inc" : "exp");
 
+  if (parsed.flow !== "income" && parsed.flow !== "transfer") {
+    mountPreviewInstallment(previewEl, parsed);
+  }
+
   const actions = previewEl.createDiv({ cls: "plg-preview-actions" });
   actions.createEl("button", { text: "修改", cls: "plg-btn-ghost", attr: { type: "button" } }).onclick = () => {
     const tx = parsedToTransaction(getPreview(), plugin.store.data.ledger, draftSource);
@@ -2010,7 +2497,7 @@ function renderCapturePreview(previewEl, parsed, ctx) {
     }, null, { draft: true, onBeforeOpen: () => onClose?.() });
   };
   actions.createEl("button", {
-    text: "确认入账",
+    text: "入账",
     cls: "plg-btn-primary",
     attr: { type: "button" },
   }).onclick = () => onConfirm(false);
@@ -2162,13 +2649,15 @@ class SmartCapturePanel {
       const text = this.textarea?.value?.trim();
       return new Notice(text ? "请先点「识别」确认这一笔" : "请输入要记的内容");
     }
-    const tx = parsedToTransaction(this.preview, this.plugin.store.data.ledger, "smart");
-    await this.plugin.store.addTransaction(tx, {
-      learnText: this.preview.raw || this.textarea?.value || this.preview.note || "",
-    });
+    const tx = await commitParsedEntry(
+      this.plugin,
+      this.preview,
+      "smart",
+      this.preview.raw || this.textarea?.value || this.preview.note || ""
+    );
+    if (!tx) return;
     this.sessionEntries.unshift(tx);
     if (this.sessionEntries.length > 8) this.sessionEntries.pop();
-    new Notice("已记账");
     if (this.textarea) this.textarea.value = "";
     this.preview = null;
     this.renderPreview(null);
@@ -2608,11 +3097,13 @@ class OcrCapturePanel {
 
   async confirmSave(keepOpen = false) {
     if (!this.preview) return new Notice("请先粘贴或上传截图并完成识别");
-    const tx = parsedToTransaction(this.preview, this.plugin.store.data.ledger, "ocr");
-    await this.plugin.store.addTransaction(tx, {
-      learnText: this.preview.raw || this.preview.note || "",
-    });
-    new Notice("已记账");
+    const tx = await commitParsedEntry(
+      this.plugin,
+      this.preview,
+      "ocr",
+      this.preview.raw || this.preview.note || ""
+    );
+    if (!tx) return;
     if (keepOpen) this.resetOcrForm();
     this.callbacks.onSaved?.({ keepOpen });
   }

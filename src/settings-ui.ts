@@ -2046,17 +2046,19 @@ function renderPendingDuesPanel(parent, plugin, opts = {}) {
         new Notice("入账失败或已存在相同账单");
       }
     };
-    actions.createEl("button", {
-      text: "详情",
-      cls: "plg-btn-ghost plg-pending-dues-detail",
-      attr: { type: "button" },
-    }).onclick = (e) => {
-      e.stopPropagation();
-      plugin.openDashboardSettings({
-        section: d.kind === "recurring" ? "recurring" : "subscription",
-        id: d.id,
-      });
-    };
+    if (d.kind !== "installment") {
+      actions.createEl("button", {
+        text: "详情",
+        cls: "plg-btn-ghost plg-pending-dues-detail",
+        attr: { type: "button" },
+      }).onclick = (e) => {
+        e.stopPropagation();
+        plugin.openDashboardSettings({
+          section: d.kind === "recurring" ? "recurring" : "subscription",
+          id: d.id,
+        });
+      };
+    }
   });
   if (dues.length > limit) {
     const moreHost = (opts.variant === "mobile-budget" && opts.listHost) ? opts.listHost : card;
